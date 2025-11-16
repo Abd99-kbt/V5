@@ -38,6 +38,8 @@ ENV DB_PASSWORD=oUn1YlbmHNKxbBDVPVTFFHS6TJrDIjYv
 
 # Set cache driver to file to avoid Redis dependency during build
 ENV CACHE_DRIVER=file
+ENV SESSION_DRIVER=file
+ENV QUEUE_CONNECTION=sync
 
 # Copy composer files
 COPY composer.json composer.lock* ./
