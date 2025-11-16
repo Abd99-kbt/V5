@@ -12,6 +12,7 @@ RUN apt-get update && apt-get install -y \
     libicu-dev \
     libpq-dev \
     postgresql-client \
+    php-redis \
     zip \
     unzip \
     nodejs \
