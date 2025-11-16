@@ -1,0 +1,265 @@
+#!/bin/bash
+
+# Complete System Testing Suite Automation Script
+# اختبار النظام الشامل الآلي
+
+set -e  # Exit on any error
+
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
+# Configuration
+TEST_DIR="./tests"
+REPORT_DIR="./test-reports"
+LOG_DIR="./test-logs"
+COVERAGE_DIR="./coverage"
+
+# Create necessary directories
+mkdir -p "$REPORT_DIR" "$LOG_DIR" "$COVERAGE_DIR"
+
+# Function to print colored output
+print_status() {
+    echo -e "${BLUE}[$(date +'%Y-%m-%d %H:%M:%S')]${NC} $1"
+}
+
+print_success() {
+    echo -e "${GREEN}[SUCCESS]${NC} $1"
+}
+
+print_error() {
+    echo -e "${RED}[ERROR]${NC} $1"
+}
+
+print_warning() {
+    echo -e "${YELLOW}[WARNING]${NC} $1"
+}
+
+# Function to run tests and capture results
+run_test_suite() {
+    local test_name="$1"
+    local test_path="$2"
+    local output_file="$3"
+    
+    print_status "Running $test_name tests..."
+    
+    # Create timestamp for this test run
+    timestamp=$(date +'%Y%m%d_%H%M%S')
+    test_log="$LOG_DIR/${test_name}_${timestamp}.log"
+    test_report="$REPORT_DIR/${test_name}_${timestamp}.xml"
+    
+    # Run tests with detailed output
+    if php artisan test "$test_path" \
+        --log-junit "$test_report" \
+        --log-events \
+        --log-verbose \
+        > "$test_log" 2>&1; then
+        print_success "$test_name tests completed successfully"
+        echo "Test Report: $test_report"
+        echo "Test Log: $test_log"
+        return 0
+    else
+        print_error "$test_name tests failed"
+        echo "Check log: $test_log"
+        return 1
+    fi
+}
+
+# Function to generate test summary
+generate_summary() {
+    local summary_file="$REPORT_DIR/test_summary_$(date +'%Y%m%d_%H%M%S').json"
+    
+    print_status "Generating test summary..."
+    
+    cat > "$summary_file" << EOF
+{
+    "test_run_date": "$(date -Iseconds)",
+    "test_environment": "testing",
+    "php_version": "$(php -v | head -n 1)",
+    "laravel_version": "$(php artisan --version)",
+    "database_connection": "testing",
+    "test_suites": {
+        "performance_tests": {
+            "load_tests": "tests/Performance/LoadTest.php",
+            "memory_tests": "tests/Performance/MemoryUsageTest.php", 
+            "database_tests": "tests/Performance/DatabasePerformanceTest.php",
+            "response_time_tests": "tests/Performance/ResponseTimeTest.php",
+            "concurrent_user_tests": "tests/Performance/ConcurrentUserTest.php",
+            "stress_tests": "tests/Performance/StressTest.php"
+        },
+        "security_tests": {
+            "authentication_tests": "tests/Security/AuthenticationSecurityTest.php",
+            "database_security_tests": "tests/Security/DatabaseSecurityTest.php"
+        },
+        "integration_tests": {
+            "database_integration": "tests/Integration/DatabaseIntegrationTest.php",
+            "cache_integration": "tests/Integration/CacheIntegrationTest.php",
+            "queue_integration": "tests/Integration/QueueIntegrationTest.php",
+            "api_integration": "tests/Integration/ApiIntegrationTest.php"
+        },
+        "functional_tests": {
+            "user_authentication": "tests/Functional/UserAuthenticationTest.php",
+            "order_management": "tests/Functional/OrderManagementTest.php",
+            "permission_system": "tests/Functional/PermissionSystemTest.php",
+            "business_logic": "tests/Functional/BusinessLogicTest.php"
+        },
+        "api_tests": {
+            "api_endpoints": "tests/Api/ApiEndpointTest.php",
+            "api_security": "tests/Api/ApiSecurityTest.php",
+            "api_performance": "tests/Api/ApiPerformanceTest.php"
+        },
+        "database_tests": {
+            "migration_tests": "tests/Database/MigrationTest.php",
+            "seed_data_tests": "tests/Database/SeedDataTest.php",
+            "query_performance": "tests/Database/QueryPerformanceTest.php"
+        },
+        "monitoring_tests": {
+            "health_checks": "tests/Monitoring/HealthCheckTest.php",
+            "alert_system": "tests/Monitoring/AlertSystemTest.php",
+            "metrics_collection": "tests/Monitoring/MetricsTest.php"
+        }
+    }
+}
+EOF
+
+    print_success "Test summary generated: $summary_file"
+}
+
+# Main execution starts here
+print_status "Starting Comprehensive System Testing Suite"
+print_status "Test Directory: $TEST_DIR"
+print_status "Report Directory: $REPORT_DIR"
+print_status "Log Directory: $LOG_DIR"
+
+# Pre-flight checks
+print_status "Running pre-flight checks..."
+
+# Check if composer dependencies are installed
+if [ ! -d "vendor" ]; then
+    print_error "Composer dependencies not installed. Running composer install..."
+    composer install --no-dev --optimize-autoloader
+fi
+
+# Check if database is configured
+if ! php artisan tinker --execute="echo 'Database connection: OK';" > /dev/null 2>&1; then
+    print_error "Database connection failed. Please check your .env configuration."
+    exit 1
+fi
+
+# Run database migrations and seeders
+print_status "Setting up test database..."
+php artisan migrate:fresh --force
+php artisan db:seed --force
+
+# Test results tracking
+declare -a failed_tests
+declare -a passed_tests
+
+# Performance Tests Suite
+print_status "=== PERFORMANCE TESTING SUITE ==="
+
+if run_test_suite "Performance_Load_Tests" "tests/Performance/LoadTest.php" "load_tests"; then
+    passed_tests+=("Performance_Load_Tests")
+else
+    failed_tests+=("Performance_Load_Tests")
+fi
+
+if run_test_suite "Performance_Memory_Tests" "tests/Performance/MemoryUsageTest.php" "memory_tests"; then
+    passed_tests+=("Performance_Memory_Tests")
+else
+    failed_tests+=("Performance_Memory_Tests")
+fi
+
+if run_test_suite "Performance_Database_Tests" "tests/Performance/DatabasePerformanceTest.php" "database_tests"; then
+    passed_tests+=("Performance_Database_Tests")
+else
+    failed_tests+=("Performance_Database_Tests")
+fi
+
+if run_test_suite "Performance_Response_Tests" "tests/Performance/ResponseTimeTest.php" "response_tests"; then
+    passed_tests+=("Performance_Response_Tests")
+else
+    failed_tests+=("Performance_Response_Tests")
+fi
+
+if run_test_suite "Performance_Concurrent_Tests" "tests/Performance/ConcurrentUserTest.php" "concurrent_tests"; then
+    passed_tests+=("Performance_Concurrent_Tests")
+else
+    failed_tests+=("Performance_Concurrent_Tests")
+fi
+
+if run_test_suite "Performance_Stress_Tests" "tests/Performance/StressTest.php" "stress_tests"; then
+    passed_tests+=("Performance_Stress_Tests")
+else
+    failed_tests+=("Performance_Stress_Tests")
+fi
+
+# Security Tests Suite
+print_status "=== SECURITY TESTING SUITE ==="
+
+if run_test_suite "Security_Authentication" "tests/Security/AuthenticationSecurityTest.php" "auth_security"; then
+    passed_tests+=("Security_Authentication")
+else
+    failed_tests+=("Security_Authentication")
+fi
+
+if run_test_suite "Security_Database" "tests/Security/DatabaseSecurityTest.php" "db_security"; then
+    passed_tests+=("Security_Database")
+else
+    failed_tests+=("Security_Database")
+fi
+
+# Generate comprehensive test summary
+generate_summary
+
+# Final report
+print_status "=== TEST EXECUTION SUMMARY ==="
+
+print_success "Passed Tests: ${#passed_tests[@]}"
+for test in "${passed_tests[@]}"; do
+    echo -e "  ${GREEN}✓${NC} $test"
+done
+
+print_error "Failed Tests: ${#failed_tests[@]}"
+for test in "${failed_tests[@]}"; do
+    echo -e "  ${RED}✗${NC} $test"
+done
+
+# Generate final report
+final_report="$REPORT_DIR/final_report_$(date +'%Y%m%d_%H%M%S').txt"
+cat > "$final_report" << EOF
+COMPREHENSIVE SYSTEM TESTING REPORT
+Generated: $(date)
+Environment: $(php artisan --version)
+
+TEST RESULTS SUMMARY
+===================
+Total Tests Run: $((${#passed_tests[@]} + ${#failed_tests[@]}))
+Passed: ${#passed_tests[@]}
+Failed: ${#failed_tests[@]}
+
+PASSED TESTS:
+$(printf '  - %s\n' "${passed_tests[@]}")
+
+FAILED TESTS:
+$(printf '  - %s\n' "${failed_tests[@]}")
+
+REPORTS DIRECTORY: $REPORT_DIR
+LOGS DIRECTORY: $LOG_DIR
+
+For detailed information, check individual test reports in $REPORT_DIR
+EOF
+
+print_success "Final report generated: $final_report"
+
+# Exit with appropriate code
+if [ ${#failed_tests[@]} -eq 0 ]; then
+    print_success "All tests passed! System is ready for production."
+    exit 0
+else
+    print_error "Some tests failed. Please review the reports and fix issues before production deployment."
+    exit 1
+fi

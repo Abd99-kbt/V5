@@ -1,0 +1,7 @@
+
+In ParseErrorException.php line 44:
+                                                                                                                       
+  PHP Parse error: Syntax error, unexpected '-', expecting '[' or T_OBJECT_OPERATOR or T_NULLSAFE_OBJECT_OPERATOR on   
+  line 1                                                                                                               
+                                                                                                                       
+

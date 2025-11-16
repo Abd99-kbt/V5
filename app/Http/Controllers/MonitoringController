@@ -1,0 +1,377 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Services\SystemMonitor;
+use App\Services\ApplicationMonitor;
+use App\Services\DatabaseMonitor;
+use App\Services\DashboardService;
+use App\Services\AlertService;
+use App\Services\LogAnalysisService;
+use App\Services\BusinessMetricsService;
+use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Log;
+
+class MonitoringController extends Controller
+{
+    protected SystemMonitor $systemMonitor;
+    protected ApplicationMonitor $applicationMonitor;
+    protected DatabaseMonitor $databaseMonitor;
+    protected DashboardService $dashboardService;
+    protected AlertService $alertService;
+    protected LogAnalysisService $logAnalysisService;
+    protected BusinessMetricsService $businessMetricsService;
+
+    public function __construct(
+        SystemMonitor $systemMonitor,
+        ApplicationMonitor $applicationMonitor,
+        DatabaseMonitor $databaseMonitor,
+        DashboardService $dashboardService,
+        AlertService $alertService,
+        LogAnalysisService $logAnalysisService,
+        BusinessMetricsService $businessMetricsService
+    ) {
+        $this->systemMonitor = $systemMonitor;
+        $this->applicationMonitor = $applicationMonitor;
+        $this->databaseMonitor = $databaseMonitor;
+        $this->dashboardService = $dashboardService;
+        $this->alertService = $alertService;
+        $this->logAnalysisService = $logAnalysisService;
+        $this->businessMetricsService = $businessMetricsService;
+    }
+
+    /**
+     * Get comprehensive monitoring metrics
+     */
+    public function metrics(Request $request): JsonResponse
+    {
+        try {
+            $type = $request->get('type', 'overview');
+            $refresh = $request->get('refresh', false);
+            
+            $metrics = $this->dashboardService->getRealtimeDashboard($type);
+            
+            if ($refresh) {
+                $this->dashboardService->clearCache($type);
+                $metrics = $this->dashboardService->getRealtimeDashboard($type);
+            }
+            
+            return response()->json([
+                'success' => true,
+                'data' => $metrics,
+                'timestamp' => now()->toISOString()
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Failed to fetch monitoring metrics', [
+                'type' => $type,
+                'error' => $e->getMessage()
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'error' => 'Failed to fetch monitoring metrics',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Get detailed health status
+     */
+    public function healthDetailed(Request $request): JsonResponse
+    {
+        try {
+            $component = $request->get('component', 'all');
+            
+            $health = [
+                'timestamp' => now()->toISOString(),
+                'overall_status' => 'unknown',
+                'components' => []
+            ];
+            
+            if ($component === 'system' || $component === 'all') {
+                $health['components']['system'] = $this->systemMonitor->getHealthStatus();
+            }
+            
+            if ($component === 'application' || $component === 'all') {
+                $health['components']['application'] = $this->applicationMonitor->getHealthStatus();
+            }
+            
+            if ($component === 'database' || $component === 'all') {
+                $health['components']['database'] = $this->databaseMonitor->getHealthStatus();
+            }
+            
+            // Determine overall health status
+            $statuses = array_column(array_column($health['components'], 'overall'), 'overall');
+            if (in_array('critical', $statuses) || in_array('error', $statuses)) {
+                $health['overall_status'] = 'critical';
+            } elseif (in_array('warning', $statuses)) {
+                $health['overall_status'] = 'warning';
+            } elseif (!empty($statuses) && !in_array('healthy', $statuses)) {
+                $health['overall_status'] = 'degraded';
+            } else {
+                $health['overall_status'] = 'healthy';
+            }
+            
+            return response()->json([
+                'success' => true,
+                'data' => $health
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Failed to fetch health details', [
+                'component' => $component,
+                'error' => $e->getMessage()
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'error' => 'Failed to fetch health details',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Alert management endpoints
+     */
+    public function alerts(Request $request): JsonResponse
+    {
+        try {
+            $action = $request->get('action', 'list');
+            
+            return match($action) {
+                'list' => $this->listAlerts(),
+                'active' => $this->getActiveAlerts(),
+                'send' => $this->sendAlert($request),
+                'acknowledge' => $this->acknowledgeAlert($request),
+                'resolve' => $this->resolveAlert($request),
+                default => $this->listAlerts(),
+            };
+        } catch (\Exception $e) {
+            Log::error('Alert management failed', [
+                'action' => $request->get('action'),
+                'error' => $e->getMessage()
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'error' => 'Alert management failed',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Log analysis endpoints
+     */
+    public function logs(Request $request): JsonResponse
+    {
+        try {
+            $action = $request->get('action', 'analyze');
+            
+            return match($action) {
+                'analyze' => $this->analyzeLogs($request),
+                'recent' => $this->getRecentLogs($request),
+                'summary' => $this->getLogSummary($request),
+                default => $this->analyzeLogs($request),
+            };
+        } catch (\Exception $e) {
+            Log::error('Log analysis failed', [
+                'action' => $request->get('action'),
+                'error' => $e->getMessage()
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'error' => 'Log analysis failed',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Performance monitoring endpoints
+     */
+    public function performance(Request $request): JsonResponse
+    {
+        try {
+            $action = $request->get('action', 'overview');
+            $timeframe = $request->get('timeframe', '1h');
+            
+            return match($action) {
+                'overview' => $this->getPerformanceOverview($timeframe),
+                'detailed' => $this->getDetailedPerformance($timeframe),
+                'trends' => $this->getPerformanceTrends($timeframe),
+                default => $this->getPerformanceOverview($timeframe),
+            };
+        } catch (\Exception $e) {
+            Log::error('Performance monitoring failed', [
+                'action' => $request->get('action'),
+                'error' => $e->getMessage()
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'error' => 'Performance monitoring failed',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    // Private methods for specific actions
+
+    private function listAlerts(): JsonResponse
+    {
+        $alerts = $this->alertService->getAlertHistory(100);
+        
+        return response()->json([
+            'success' => true,
+            'data' => $alerts,
+            'count' => count($alerts)
+        ]);
+    }
+
+    private function getActiveAlerts(): JsonResponse
+    {
+        $alerts = $this->alertService->getActiveAlerts();
+        
+        return response()->json([
+            'success' => true,
+            'data' => $alerts,
+            'count' => count($alerts)
+        ]);
+    }
+
+    private function sendAlert(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'type' => 'required|string',
+            'severity' => 'required|in:info,warning,critical,emergency',
+            'message' => 'required|string',
+            'context' => 'array',
+        ]);
+        
+        $success = $this->alertService->sendAlert(
+            $validated['type'],
+            $validated['severity'],
+            $validated['message'],
+            $validated['context'] ?? []
+        );
+        
+        return response()->json([
+            'success' => $success,
+            'message' => $success ? 'Alert sent successfully' : 'Failed to send alert'
+        ], $success ? 200 : 500);
+    }
+
+    private function acknowledgeAlert(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'alert_id' => 'required|string',
+            'user_id' => 'required|string',
+        ]);
+        
+        $success = $this->alertService->acknowledgeAlert(
+            $validated['alert_id'],
+            $validated['user_id']
+        );
+        
+        return response()->json([
+            'success' => $success,
+            'message' => $success ? 'Alert acknowledged' : 'Failed to acknowledge alert'
+        ], $success ? 200 : 500);
+    }
+
+    private function resolveAlert(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'alert_id' => 'required|string',
+            'user_id' => 'required|string',
+            'resolution' => 'string|nullable',
+        ]);
+        
+        $success = $this->alertService->resolveAlert(
+            $validated['alert_id'],
+            $validated['user_id'],
+            $validated['resolution']
+        );
+        
+        return response()->json([
+            'success' => $success,
+            'message' => $success ? 'Alert resolved' : 'Failed to resolve alert'
+        ], $success ? 200 : 500);
+    }
+
+    private function analyzeLogs(Request $request): JsonResponse
+    {
+        $options = [
+            'time_range' => $request->get('time_range', '1h'),
+            'levels' => $request->get('levels', ['error', 'warning', 'critical']),
+            'source' => $request->get('source', 'application'),
+        ];
+        
+        $analysis = $this->logAnalysisService->analyzeLogs($options);
+        
+        return response()->json([
+            'success' => true,
+            'data' => $analysis
+        ]);
+    }
+
+    private function getRecentLogs(Request $request): JsonResponse
+    {
+        // This would return recent log entries
+        return response()->json([
+            'success' => true,
+            'data' => [],
+            'message' => 'Recent logs functionality to be implemented'
+        ]);
+    }
+
+    private function getLogSummary(Request $request): JsonResponse
+    {
+        $cached = $this->logAnalysisService->getCachedAnalysis();
+        
+        return response()->json([
+            'success' => true,
+            'data' => $cached ?? ['message' => 'No log analysis available']
+        ]);
+    }
+
+    private function getPerformanceOverview(string $timeframe): JsonResponse
+    {
+        $metrics = $this->businessMetricsService->getBusinessMetrics([
+            'timeframe' => $timeframe,
+            'category' => 'performance'
+        ]);
+        
+        return response()->json([
+            'success' => true,
+            'data' => $metrics
+        ]);
+    }
+
+    private function getDetailedPerformance(string $timeframe): JsonResponse
+    {
+        $dashboardData = $this->dashboardService->getRealtimeDashboard('performance');
+        
+        return response()->json([
+            'success' => true,
+            'data' => $dashboardData
+        ]);
+    }
+
+    private function getPerformanceTrends(string $timeframe): JsonResponse
+    {
+        $metrics = $this->businessMetricsService->getBusinessMetrics([
+            'timeframe' => $timeframe,
+            'category' => 'all'
+        ]);
+        
+        return response()->json([
+            'success' => true,
+            'data' => $metrics
+        ]);
+    }
+}

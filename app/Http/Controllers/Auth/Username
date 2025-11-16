@@ -1,0 +1,90 @@
+<?php
+
+namespace App\Http\Controllers\Auth;
+
+use App\Http\Controllers\Controller;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Password;
+use Illuminate\Validation\ValidationException;
+
+class UsernameLoginController extends Controller
+{
+    /**
+     * Handle login request using username instead of email.
+     */
+    public function authenticate(Request $request)
+    {
+        $request->validate([
+            'username' => ['required', 'string'],
+            'password' => ['required', 'string'],
+        ]);
+
+        $credentials = $request->only('username', 'password');
+
+        // Attempt authentication using username
+        if (Auth::attempt($credentials, $request->boolean('remember'))) {
+            $request->session()->regenerate();
+            
+            return redirect()->intended(route('filament.admin.auth.login'));
+        }
+
+        // If authentication fails, check if it's due to username not found
+        $user = \App\Models\User::where('username', $request->username)->first();
+        
+        if (!$user) {
+            throw ValidationException::withMessages([
+                'username' => ['اسم المستخدم غير موجود'],
+            ]);
+        }
+
+        // If user exists but password is wrong
+        if (!Hash::check($request->password, $user->password)) {
+            throw ValidationException::withMessages([
+                'password' => ['كلمة المرور غير صحيحة'],
+            ]);
+        }
+
+        // Generic error
+        throw ValidationException::withMessages([
+            'username' => ['بيانات الدخول غير صحيحة'],
+        ]);
+    }
+
+    /**
+     * Handle logout request.
+     */
+    public function logout(Request $request)
+    {
+        Auth::logout();
+
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        return redirect()->route('filament.admin.auth.login');
+    }
+
+    /**
+     * Send password reset link using username.
+     */
+    public function sendResetLinkEmail(Request $request)
+    {
+        $request->validate([
+            'username' => ['required', 'string', 'exists:users,username'],
+        ]);
+
+        $user = \App\Models\User::where('username', $request->username)->first();
+
+        // We will send the password reset link to this user. Once we have attempted
+        // to send the link, we will examine the response then see the message we
+        // need to show to the user. Finally, we'll send out a proper response.
+        $status = Password::sendResetLink(
+            ['username' => $user->username, 'email' => $user->email]
+        );
+
+        return $status == Password::RESET_LINK_SENT
+                    ? back()->with('status', 'تم إرسال رابط إعادة تعيين كلمة المرور')
+                    : back()->withErrors(['username' => 'فشل في إرسال رابط إعادة التعيين']);
+    }
+}

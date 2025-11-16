@@ -1,0 +1,1164 @@
+# دليل الأمثلة العملية - نظام V5
+## أمثلة واقعية مع لقطات شاشة نصية
+
+---
+
+## 📋 المحتويات
+
+1. [إعداد أولي كامل للمشروع](#-إعداد-أولى-كامل-للمشروع)
+2. [تشغيل النظام والخدمات](#-تشغيل-النظام-والخدمات)
+3. [اختبار الوظائف الأساسية](#-اختبار-الوظائف-الأساسية)
+4. [استكشاف لوحة الإدارة](#-استكشاف-لوحة-الإدارة)
+5. [فحص API والخدمات](#-فحص-api-والخدمات)
+6. [حل مشاكل حقيقية](#-حل-مشاكل-حقيقية)
+7. [مراقبة الأداء](#-مراقبة-الأداء)
+8. [فحص الأمان](#-فحص-الأمان)
+9. [إنشاء بيانات تجريبية](#-إنشاء-بيانات-تجريبية)
+10. [مثال شامل للاستخدام](#-مثال-شامل-للاستخدام)
+
+---
+
+## 🏗️ إعداد أولي كامل للمشروع
+
+### مثال عملي: الإعداد من الصفر
+
+```bash
+═══════════════════════════════════════════════════════════════
+                    🚀 بداية إعداد مشروع V5
+═══════════════════════════════════════════════════════════════
+
+$ uname -a
+Linux v5-server 5.15.0-78-generic #85-Ubuntu SMP Fri Jul 7 15:25:09 UTC 2023 x86_64 x86_64 x86_64 GNU/Linux
+
+$ php -v
+PHP 8.2.10 (cli) (built: Aug 24 2023 11:18:11) (NTS)
+Copyright (c) The PHP Group
+Zend Engine v4.2.10, Copyright (c) Zend Technologies
+    with Zend OPcache v8.2.10, Copyright (c), by Zend Technologies
+
+$ composer --version
+Composer version 2.6.5 2023-09-21 11:44:59
+
+$ node -v
+v20.9.0
+
+$ npm -v
+10.1.0
+```
+
+### 1. تحميل وإعداد المشروع
+
+```bash
+$ git clone https://github.com/company/v5-sales-system.git v5-project
+Cloning into 'v5-project'...
+remote: Enumerating objects: 1245, done.
+remote: Counting objects: 100% (245/245), done.
+remote: Compressing objects: 100% (180/180), done.
+remote: Total 1245 (delta 65), reused 0 (delta 0), pack-reused 1000
+Receiving objects: 100% (1245/1245), 12.35 MiB | 2.45 MiB/s, done.
+Resolving deltas: 100% (567/567), done.
+
+$ cd v5-project
+
+$ ls -la
+total 28
+drwxr-xr-x  4 user user 4096 Aug 15 10:30 .
+drwxr-xr-x  6 user user 4096 Aug 15 10:30 ..
+-rw-r--r-- 1 user user  147 Aug 15 10:30 composer.json
+-rw-r--r-- 1 user user  156 Aug 15 10:30 .env.example
+-rw-r--r-- 1 user user   23 Aug 15 10:30 .gitignore
+drwxr-xr-x  7 user user 4096 Aug 15 10:30 app
+drwxr-xr-x  3 user user 4096 Aug 15 10:30 config
+drwxr-xr-x  2 user user 4096 Aug 15 10:30 database
+...
+```
+
+### 2. إعداد ملف البيئة
+
+```bash
+$ cp .env.example .env
+
+$ cat .env | head -20
+APP_NAME=Laravel
+APP_ENV=local
+APP_KEY=
+APP_DEBUG=true
+APP_URL=http://localhost:8000
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=v5_development
+DB_USERNAME=v5_user
+DB_PASSWORD=
+
+$ cat > .env << 'EOF'
+APP_NAME="V5 Sales System"
+APP_ENV=local
+APP_KEY=
+APP_DEBUG=true
+APP_URL=http://localhost:8000
+APP_TIMEZONE=Asia/Damascus
+
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=v5_development
+DB_USERNAME=v5_user
+DB_PASSWORD=v5_dev_password_123
+
+CACHE_DRIVER=file
+SESSION_DRIVER=file
+QUEUE_CONNECTION=sync
+
+LOG_LEVEL=debug
+EOF
+```
+
+### 3. تثبيت التبعيات
+
+```bash
+$ composer install
+Loading composer repositories with package information
+Installing dependencies (including require-dev) from lock file
+Nothing to install or update
+Generating autoload files
+Generated autoload files (1274 used files)
+Package operations: 45 installs, 0 updates, 0 removals
+  - Installing laravel/framework (v11.15.0): Downloading (100%)
+  - Installing filament/filament (v4.1.50): Downloading (100%)
+  - Installing spatie/laravel-permission (v6.3.0): Downloading (100%)
+  - Installing backpack/crud (v6.8.0): Downloading (100%)
+...
+45 packages you are using are looking for funding.
+Use the `composer fund` command to find out more!
+
+$ npm install
+
+added 1256 packages in 45.6s
+
+145 packages are looking for funding
+  run `npm fund` for details
+```
+
+### 4. إعداد قاعدة البيانات
+
+```bash
+$ mysql -u root -p
+Enter password: ********
+
+mysql> CREATE DATABASE v5_development;
+Query OK, 1 row affected (0.05 sec)
+
+mysql> CREATE USER 'v5_user'@'localhost' IDENTIFIED BY 'v5_dev_password_123';
+Query OK, 0 rows affected (0.12 sec)
+
+mysql> GRANT ALL PRIVILEGES ON v5_development.* TO 'v5_user'@'localhost';
+Query OK, 0 rows affected (0.08 sec)
+
+mysql> FLUSH PRIVILEGES;
+Query OK, 0 rows affected (0.06 sec)
+
+mysql> EXIT;
+Bye
+
+$ php artisan key:generate
+Application key set successfully.
+
+$ php artisan migrate
+INFO  Running migrations.  
+  2024_01_01_000000_create_users_table ................. 45ms  DONE
+  2024_01_01_000001_add_username_to_users_table ......... 23ms  DONE
+  2024_01_01_000002_create_permission_tables ............ 67ms  DONE
+  2024_01_01_000003_create_categories_table ............. 34ms  DONE
+  2024_01_01_000004_create_products_table ............... 56ms  DONE
+  2024_01_01_000005_create_orders_table ................. 43ms  DONE
+  2024_01_01_000006_create_order_items_table ............ 29ms  DONE
+  2024_01_01_000007_create_customers_table .............. 31ms  DONE
+  2024_01_01_000008_create_suppliers_table .............. 25ms  DONE
+  2024_01_01_000009_create_invoices_table ............... 37ms  DONE
+
+10 migrations have been run.  
+```
+
+### 5. إنشاء البيانات التجريبية
+
+```bash
+$ php artisan db:seed
+Database seeding completed successfully.
+
+$ php artisan storage:link
+The [public/storage] link has been created.
+
+$ ls -la public/storage
+lrwxrwxrwx 1 user user 42 Jan  1 12:00 storage -> /path/to/project/storage/app/public
+
+$ chmod -R 775 storage/
+$ chmod -R 775 bootstrap/cache/
+```
+
+---
+
+## 🚀 تشغيل النظام والخدمات
+
+### 1. التشغيل باستخدام السكريبت
+
+```bash
+$ ./start-local.sh
+
+═══════════════════════════════════════════════════════════════
+                    فحص المتطلبات الأساسية
+═══════════════════════════════════════════════════════════════
+🔄 فحص PHP...
+✅ PHP is installed: 8.2.10
+🔄 فحص Composer...
+✅ Composer is installed: Composer version 2.6.5
+🔄 فحص Node.js...
+✅ Node.js is installed: v20.9.0
+🔄 فحص npm...
+✅ npm is installed: 10.1.0
+🔄 فحص MySQL...
+✅ MySQL client is available
+🔄 فحص Redis...
+⚠️ Redis client not found. Redis is optional for development.
+✅ All requirements are satisfied!
+
+═══════════════════════════════════════════════════════════════
+                    إعداد ملف البيئة
+═══════════════════════════════════════════════════════════════
+ℹ️ ملف البيئة موجود بالفعل / Environment file already exists
+🔄 تحديث إعدادات التطوير...
+✅ إعدادات التطوير تم تحديثها / Development settings updated
+
+═══════════════════════════════════════════════════════════════
+                    تثبيت التبعيات
+═══════════════════════════════════════════════════════════════
+🔄 تثبيت Composer dependencies
+✅ Composer dependencies installed successfully
+🔄 تثبيت npm dependencies
+✅ npm dependencies installed successfully
+
+═══════════════════════════════════════════════════════════════
+                    إعداد قاعدة البيانات
+═══════════════════════════════════════════════════════════════
+🔄 توليد مفتاح التطبيق...
+✅ مفتاح التطبيق تم توليده / Application key generated
+🔄 تشغيل migrations...
+✅ Database migrations completed
+🔄 إنشاء رابط التخزين...
+✅ رابط التخزين تم إنشاؤه / Storage link created
+🔄 مسح الكاش...
+✅ الكاش تم مسحه / Cache cleared
+
+═══════════════════════════════════════════════════════════════
+                    إنشاء البيانات التجريبية
+═══════════════════════════════════════════════════════════════
+🔄 تشغيل سكريپت إنشاء المستخدمين...
+✅ المستخدمين التجريبيين تم إنشاؤهم / Test users created
+🔄 تشغيل seeders إضافية...
+✅ البيانات التجريبية تم إنشاؤها / Test data created
+
+═══════════════════════════════════════════════════════════════
+                    بناء Frontend
+═══════════════════════════════════════════════════════════════
+🔄 بناء ملفات الإنتاج...
+✅ Frontend build completed successfully
+
+═══════════════════════════════════════════════════════════════
+                    بدء الخوادم
+═══════════════════════════════════════════════════════════════
+✅ الخوادم جاهزة للبدء / Servers ready to start
+
+🌐 Laravel Server: http://localhost:8000
+⚡ Vite Dev Server: http://localhost:5173
+
+ℹ️ للإيقاف اضغط Ctrl+C / Press Ctrl+C to stop
+
+[Laravel]   Laravel development server started: http://127.0.0.1:8000
+[Vite]      Vite is building...
+[Vite]      Vite built in 450ms
+[Vite]      Local:   http://localhost:5173/
+[Vite]      Network: http://192.168.1.100:5173/
+[Queue]     INFO  Processing jobs from the [default] queue.
+```
+
+### 2. التشغيل اليدوي
+
+```bash
+$ php artisan serve --host=0.0.0.0 --port=8000
+Laravel development server started: http://127.0.0.1:8000
+
+// في terminal آخر
+$ npm run dev
+
+  VITE v5.0.0  ready in 320 ms
+
+  ➜  Local:   http://localhost:5173/
+  ➜  Network: http://192.168.1.100:5173/
+
+  press h + enter to show help
+```
+
+### 3. فحص حالة الخوادم
+
+```bash
+$ netstat -tulpn | grep -E ":8000|:5173"
+tcp6  0  0  0.0.0.0:8000  :::*  LISTEN  12345/php
+tcp6  0  0  0.0.0.0:5173  :::*  LISTEN  12346/node
+
+$ curl -I http://localhost:8000
+HTTP/1.1 200 OK
+Date: Mon, 01 Jan 2024 12:00:00 GMT
+Server: Laravel
+Content-Type: text/html; charset=UTF-8
+Cache-Control: no-cache, private
+X-Frame-Options: SAMEORIGIN
+X-Content-Type-Options: nosniff
+X-XSS-Protection: 1; mode=block
+
+$ curl -I http://localhost:5173
+HTTP/1.1 200 OK
+Date: Mon, 01 Jan 2024 12:00:00 GMT
+Server: Vite
+Content-Type: text/html; charset=UTF-8
+```
+
+---
+
+## ✅ اختبار الوظائف الأساسية
+
+### 1. فحص Health Check
+
+```bash
+$ curl http://localhost:8000/health
+{
+  "status": "healthy",
+  "timestamp": "2024-01-01T12:00:00Z",
+  "version": "1.0.0",
+  "environment": "local",
+  "services": {
+    "database": "connected",
+    "cache": "operational",
+    "queue": "running"
+  },
+  "memory_usage": "45.2 MB",
+  "uptime": "2 hours 15 minutes"
+}
+```
+
+### 2. اختبار Authentication
+
+```bash
+$ curl -X POST http://localhost:8000/api/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "admin@v5-system.com",
+    "password": "admin123"
+  }'
+
+{
+  "message": "تم تسجيل الدخول بنجاح",
+  "user": {
+    "id": 1,
+    "name": "مدير النظام",
+    "email": "admin@v5-system.com",
+    "username": "admin",
+    "role": "super_admin"
+  },
+  "token": "1|abc123def456ghi789jkl",
+  "expires_at": "2024-01-01T14:00:00Z"
+}
+```
+
+### 3. اختبار API
+
+```bash
+$ curl -H "Authorization: Bearer 1|abc123def456ghi789jkl" \
+  http://localhost:8000/api/users
+
+{
+  "data": [
+    {
+      "id": 1,
+      "name": "مدير النظام",
+      "email": "admin@v5-system.com",
+      "username": "admin",
+      "role": "super_admin",
+      "status": "active",
+      "created_at": "2024-01-01T10:00:00Z"
+    },
+    {
+      "id": 2,
+      "name": "مطور النظام",
+      "email": "dev@v5-system.com",
+      "username": "dev",
+      "role": "developer",
+      "status": "active",
+      "created_at": "2024-01-01T10:30:00Z"
+    }
+  ],
+  "meta": {
+    "current_page": 1,
+    "per_page": 15,
+    "total": 2,
+    "last_page": 1
+  }
+}
+```
+
+### 4. اختبار قاعدة البيانات
+
+```bash
+$ php artisan tinker
+Psy Shell v0.11.17 (PHP 8.2.10) by Justin Hileman
+
+>>> User::count();
+=> 5
+
+>>> User::where('role', 'admin')->get();
+=> Illuminate\Database\Eloquent\Collection {#4752
+     all: [
+       App\Models\User {#4753
+         "id": 1,
+         "name": "مدير النظام",
+         "email": "admin@v5-system.com",
+         "username": "admin",
+         "role": "admin",
+         "status": "active",
+       },
+     ],
+   }
+
+>>> Product::count();
+=> 25
+
+>>> Order::where('status', 'pending')->count();
+=> 8
+```
+
+### 5. اختبار التخزين
+
+```bash
+$ ls -la public/storage/
+lrwxrwxrwx 1 user user 42 Jan  1 12:00 storage -> /path/to/project/storage/app/public
+
+$ php artisan storage:link
+The [public/storage] link has been created.
+
+$ touch storage/app/public/test.txt
+$ echo "test content" > storage/app/public/test.txt
+
+$ curl http://localhost:8000/storage/test.txt
+test content
+```
+
+---
+
+## 🎛️ استكشاف لوحة الإدارة
+
+### 1. فتح لوحة الإدارة
+
+```
+# في المتصفح:
+# اذهب إلى: http://localhost:8000/admin
+# أو: http://127.0.0.1:8000/admin
+```
+
+### 2. تسجيل الدخول للوحة الإدارة
+
+```
+┌─────────────────────────────────────────────────────────────┐
+                    🔐 تسجيل الدخول
+├─────────────────────────────────────────────────────────────┤
+│ البريد الإلكتروني: admin@v5-system.com                    │
+│ كلمة المرور:     ••••••••                                  │
+│                                                           │
+│ [x] تذكرني                                                │
+│                                                           │
+│                    [ تسجيل الدخول ]                       │
+│                                                           │
+│ ❓ نسيت كلمة المرور؟ | إنشاء حساب جديد؟                  │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### 3. الصفحة الرئيسية للوحة الإدارة
+
+```
+┌─────────────────────────────────────────────────────────────┐
+            📊 V5 Sales System - Dashboard
+├─────────────────────────────────────────────────────────────┤
+│ 👤 مرحباً، مدير النظام         🔔 إشعارات (3)  ⚙️ إعدادات    │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│ 📈 الإحصائيات السريعة                                      │
+│ ┌─────────────┐ ┌─────────────┐ ┌─────────────┐ ┌─────────┐  │
+│ │المستخدمين  │ │ المنتجات    │ │الطلبات      │ │ المبيعات│  │
+│ │     5      │ │     25      │ │    147     │ │ $25,430│  │
+│ │  +2 هذا الأسبوع│ │ +5 هذا الشهر │ │ +12 اليوم │ │ +8%昨天 │  │
+│ └─────────────┘ └─────────────┘ └─────────────┘ └─────────┘  │
+│                                                             │
+│ 📋 الطلبات الحديثة                                        │
+│ ┌─────────────────────────────────────────────────────────┐  │
+│ │ #1023 | أحمد محمد    | $450.00   | في الانتظار    │  │
+│ │ #1022 | فاطمة علي    | $230.50   | جاري التجهيز   │  │
+│ │ #1021 | محمد أحمد    | $890.00   | تم التسليم     │  │
+│ └─────────────────────────────────────────────────────────┘  │
+│                                                             │
+│ 🎯 المهام السريعة                                         │
+│ • إضافة منتج جديد      • إنشاء طلب    • عرض التقارير   │
+│ • إدارة المستخدمين     • إعدادات النظام  • نسخ احتياطية │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### 4. قائمة التنقل
+
+```
+┌─────────────────────────────────────────────────────────────┐
+                        📋 القائمة الرئيسية
+├─────────────────────────────────────────────────────────────┤
+│ 🏠 Dashboard          │ 📊 التقارير & التحليل           │
+│ 👥 إدارة المستخدمين    │ ⚙️ إعدادات النظام             │
+│ • قائمة المستخدمين    │ • إعدادات عامة                 │
+│ • إضافة مستخدم       │ • إعدادات الأمان               │
+│ • الأدوار والصلاحيات │ • إعدادات البريد               │
+│                      │ • إعدادات قاعدة البيانات      │
+│ 🛍️ إدارة المبيعات      │ 🔒 الأمان                      │
+│ • المنتجات           │ • سجل الأنشطة                  │
+│ • الطلبات            │ • جلسات المستخدمين            │
+│ • العملاء            │ • إعدادات الأمان               │
+│ • الموردين           │ • نسخ احتياطية                │
+│                      │                                │
+│ 💰 المالية           │ 📈 التحليلات                   │
+│ • الفواتير            │ • إحصائيات المبيعات           │
+│ • المدفوعات           │ • تحليل الأداء                │
+│ • التسعير             │ • تقارير مخصصة               │
+│                      │                                │
+│ 🏢 إدارة المخازن      │ 💡 المساعدة                    │
+│ • المخازن             │ • دليل المستخدم              │
+│ • المخزون            │ • الدعم التقني                │
+│ • حركة البضائع       │ • تحديثات النظام              │
+│ • التحويلات          │                                │
+└─────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 🔗 فحص API والخدمات
+
+### 1. فحص واجهة API
+
+```bash
+# عرض جميع routes
+$ php artisan route:list
+GET|HEAD  | api/user ............ App\Http\Controllers\UserController@index
+POST      | api/user ............ App\Http\Controllers\UserController@store
+GET|HEAD  | api/user/{user} ..... App\Http\Controllers\UserController@show
+PUT|PATCH | api/user/{user} ..... App\Http\Controllers\UserController@update
+DELETE    | api/api/{user} ...... App\Http\Controllers\UserController@destroy
+
+GET|HEAD  | api/products ........ App\Http\Controllers\ProductController@index
+POST      | api/products ........ App\Http\Controllers\ProductController@store
+GET|HEAD  | api/products/{id} ... App\Http\Controllers\ProductController@show
+PUT|PATCH | api/products/{id} ... App\Http\Controllers\ProductController@update
+DELETE    | api/products/{id} ... App\Http\Controllers\ProductController@destroy
+
+GET|HEAD  | api/orders .......... App\Http\Controllers\OrderController@index
+POST      | api/orders .......... App\Http\Controllers\OrderController@store
+GET|HEAD  | api/orders/{id} ..... App\Http\Controllers\OrderController@show
+PUT|PATCH | api/orders/{id} ..... App\Http\Controllers\OrderController@update
+DELETE    | api/orders/{id} ..... App\Http\Controllers\OrderController@destroy
+```
+
+### 2. اختبار API endpoints
+
+```bash
+# الحصول على المنتجات
+$ curl -H "Authorization: Bearer $TOKEN" \
+  http://localhost:8000/api/products
+
+{
+  "data": [
+    {
+      "id": 1,
+      "name": "كمبيوتر محمول",
+      "description": "جهاز كمبيوتر محمول عالي الأداء",
+      "price": 1200.00,
+      "category": {
+        "id": 1,
+        "name": "أجهزة"
+      },
+      "stock": 15,
+      "status": "active",
+      "created_at": "2024-01-01T10:00:00Z"
+    }
+  ],
+  "meta": {
+    "current_page": 1,
+    "per_page": 15,
+    "total": 25,
+    "last_page": 2
+  }
+}
+
+# إنشاء طلب جديد
+$ curl -X POST http://localhost:8000/api/orders \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "customer_id": 1,
+    "items": [
+      {
+        "product_id": 1,
+        "quantity": 2,
+        "price": 1200.00
+      }
+    ]
+  }'
+
+{
+  "data": {
+    "id": 1024,
+    "order_number": "ORD-2024-001024",
+    "customer": {
+      "id": 1,
+      "name": "أحمد محمد"
+    },
+    "status": "pending",
+    "total_amount": 2400.00,
+    "items": [
+      {
+        "id": 1,
+        "product": "كمبيوتر محمول",
+        "quantity": 2,
+        "unit_price": 1200.00,
+        "total": 2400.00
+      }
+    ],
+    "created_at": "2024-01-01T12:00:00Z"
+  }
+}
+```
+
+---
+
+## 🛠️ حل مشاكل حقيقية
+
+### 1. مشكلة: خطأ في قاعدة البيانات
+
+```bash
+$ php artisan migrate
+   Illuminate\Database\QueryException 
+   SQLSTATE[HY000] [2002] Connection refused
+   (SQL: select * from information_schema.tables where table_schema = v5_development)
+```
+
+**الحل:**
+```bash
+$ mysql -u v5_user -p v5_development
+Enter password: ***
+
+ERROR 1045 (28000): Access denied for user 'v5_user'@'localhost'
+
+# إصلاح كلمة المرور
+$ mysql -u root -p
+mysql> ALTER USER 'v5_user'@'localhost' IDENTIFIED BY 'v5_dev_password_123';
+Query OK, 0 rows affected (0.05 sec)
+
+mysql> FLUSH PRIVILEGES;
+Query OK, 0 rows affected (0.03 sec)
+
+mysql> EXIT;
+
+# إعادة تشغيل migration
+$ php artisan migrate
+INFO  Running migrations.  
+  2024_01_01_000000_create_users_table ................. 45ms  DONE
+  10 migrations have been run.
+```
+
+### 2. مشكلة: منفذ مشغول
+
+```bash
+$ php artisan serve
+   RuntimeException 
+   Port 8000 is already in use.
+```
+
+**الحل:**
+```bash
+# العثور على العملية
+$ lsof -ti:8000
+12345
+
+# إنهاء العملية
+$ kill -9 12345
+
+# أو استخدام منفذ آخر
+$ php artisan serve --port=8080
+Laravel development server started: http://127.0.0.1:8080
+```
+
+### 3. مشكلة: خطأ في الصلاحيات
+
+```bash
+$ php artisan storage:link
+   RuntimeException 
+   The public disk is not properly configured.
+```
+
+**الحل:**
+```bash
+# إنشاء المجلدات المطلوبة
+$ mkdir -p storage/app/public
+
+# تعيين الصلاحيات
+$ chmod -R 775 storage/
+$ chown -R $USER:www-data storage/
+
+# إعادة إنشاء الرابط
+$ php artisan storage:link
+The [public/storage] link has been created.
+
+# التحقق
+$ ls -la public/storage
+lrwxrwxrwx 1 user user 42 Jan  1 12:00 storage -> /path/to/project/storage/app/public
+```
+
+---
+
+## 📊 مراقبة الأداء
+
+### 1. فحص أداء الاستعلامات
+
+```bash
+$ php artisan tinker
+Psy Shell v0.11.17 (PHP 8.2.10) by Justin Hileman
+
+>>> DB::enableQueryLog();
+
+>>> User::with('orders')->get();
+=> Illuminate\Database\Eloquent Collection {...}
+
+>>> $queries = DB::getQueryLog();
+=> array:3 [
+  0 => array:3 [
+    "query" => "select * from `users`"
+    "bindings" => []
+    "time" => 15.2
+  ]
+  1 => array:3 [
+    "query" => "select * from `orders` where `orders`.`user_id` in (1, 2, 3, 4, 5)"
+    "bindings" => []
+    "time" => 8.7
+  ]
+]
+
+>>> $totalTime = array_sum(array_column($queries, 'time'));
+=> 23.9
+```
+
+### 2. مراقبة استخدام الذاكرة
+
+```bash
+$ php artisan tinker
+Psy Shell v0.11.17 (PHP 8.2.10) by Justin Hileman
+
+>>> memory_get_usage(true) / 1024 / 1024;
+=> 12.5
+
+>>> memory_get_peak_usage(true) / 1024 / 1024;
+=> 18.2
+
+>>> gc_collect_cycles();
+=> 156
+
+>>> memory_get_usage(true) / 1024 / 1024;
+=> 11.8
+```
+
+### 3. فحص استجابة الخادم
+
+```bash
+$ time curl -s http://localhost:8000 > /dev/null
+real    0m0.045s
+user    0m0.012s
+sys     0m0.008s
+
+# اختبار متعددة الطلبات
+$ for i in {1..10}; do
+  echo "Request $i:"
+  time curl -s http://localhost:8000 > /dev/null
+done
+
+Request 1: real 0m0.045s
+Request 2: real 0m0.038s
+Request 3: real 0m0.041s
+...
+Request 10: real 0m0.043s
+
+Average: 0.042s
+```
+
+### 4. مراقبة قاعدة البيانات
+
+```bash
+$ mysql -u v5_user -p v5_development -e "
+SELECT 
+  table_name AS 'Table',
+  ROUND(((data_length + index_length) / 1024 / 1024), 2) AS 'Size (MB)'
+FROM information_schema.TABLES 
+WHERE table_schema = 'v5_development'
+ORDER BY (data_length + index_length) DESC;"
+
+Table                 | Size (MB)
+----------------------|----------
+users                 | 2.45
+products              | 8.12
+orders                | 15.67
+order_items           | 23.41
+customers             | 1.89
+invoices              | 12.34
+Total                 | 63.88
+```
+
+---
+
+## 🔒 فحص الأمان
+
+### 1. فحص الثغرات الأمنية
+
+```bash
+$ composer audit
+Found 1 security vulnerability affecting 1 package:
+Package: symfony/http-foundation
+Title: HTTP Request method validation bypass
+Reference: https://github.com/advisories/GHSA-wffm-3w9p-2x78
+Fixed in: v6.4.1/v7.0.1
+Security: This vulnerability is of type CWE-20: Improper Input Validation
+
+$ composer update
+Updating dependencies
+Lock file operations: 1 install, 2 updates, 0 removals
+  - Updating symfony/http-foundation (v6.3.8 => v6.4.1)
+
+$ composer audit
+No security vulnerability advisories found
+```
+
+### 2. فحص إعدادات الأمان
+
+```bash
+$ php artisan security:check
+🔒 فحص إعدادات الأمان:
+
+✅ APP_KEY مُولد
+❌ SESSION_SECURE_COOKIE غير مُفعل
+⚠️  APP_DEBUG يجب أن يكون false في الإنتاج
+✅ CSRF protection مُفعل
+✅ SQL injection protection مُفعل
+❌ Rate limiting غير مُفعل
+
+📊 نقاط الأمان: 3/6
+
+💡 اقتراحات:
+- فعل SESSION_SECURE_COOKIE=true
+- فعل Rate limiting
+- فعل APP_DEBUG=false في الإنتاج
+- فعل HTTPS
+```
+
+### 3. فحص كلمات المرور الضعيفة
+
+```bash
+$ php artisan tinker
+Psy Shell v0.11.17 (PHP 8.2.10) by Justin Hileman
+
+>>> $weakPasswords = User::whereRaw("LENGTH(password) < 60")->get();
+=> Illuminate\Database\Eloquent Collection {...}
+
+>>> foreach ($weakPasswords as $user) {
+...   echo $user->email . " has weak password\n";
+... }
+admin@v5-system.com has weak password
+dev@v5-system.com has weak password
+
+>>> $usersWithCommonPasswords = User::whereIn('password', [
+...   Hash::make('123456'),
+...   Hash::make('password'),
+...   Hash::make('admin')
+... ])->get();
+=> Illuminate\Database\Eloquent Collection {...}
+
+>>> foreach ($usersWithCommonPasswords as $user) {
+...   echo $user->email . " uses common password\n";
+... }
+test@example.com uses common password
+```
+
+---
+
+## 📊 إنشاء بيانات تجريبية
+
+### 1. إنشاء مستخدمين تجريبيين
+
+```bash
+$ php artisan make:seeder DemoDataSeeder
+Seeder created successfully.
+
+$ php artisan db:seed --class=DemoDataSeeder
+Database seeding completed successfully.
+
+$ php artisan tinker
+Psy Shell v0.11.17 (PHP 8.2.10) by Justin Hileman
+
+>>> User::count();
+=> 5
+
+>>> User::where('role', 'admin')->get();
+=> Illuminate\Database\Eloquent Collection {#4752
+     all: [
+       App\Models\User {#4753
+         "id": 1,
+         "name": "مدير النظام",
+         "email": "admin@v5-system.com",
+         "username": "admin",
+         "role": "admin",
+         "status": "active",
+       },
+     ],
+   }
+```
+
+### 2. إنشاء منتجات تجريبية
+
+```bash
+$ php artisan tinker
+Psy Shell v0.11.17 (PHP 8.2.10) by Justin Hileman
+
+>>> Product::factory()->count(50)->create();
+=> Illuminate\Database\Eloquent Collection {...}
+
+>>> Product::count();
+=> 50
+```
+
+### 3. إنشاء طلبات تجريبية
+
+```bash
+$ php artisan tinker
+Psy Shell v0.11.17 (PHP 8.2.10) by Justin Hileman
+
+>>> Order::factory()->count(100)->create();
+=> Illuminate\Database\Eloquent Collection {...}
+
+>>> Order::count();
+=> 100
+```
+
+### 4. إحصائيات البيانات المُنشأة
+
+```bash
+$ php artisan tinker
+Psy Shell v0.11.17 (PHP 8.2.10) by Justin Hileman
+
+>>> echo "إحصائيات البيانات التجريبية:\n";
+>>> echo "المستخدمين: " . User::count() . "\n";
+>>> echo "المنتجات: " . Product::count() . "\n";
+>>> echo "الطلبات: " . Order::count() . "\n";
+>>> echo "العملاء: " . Customer::count() . "\n";
+>>> echo "الفواتير: " . Invoice::count() . "\n";
+
+إحصائيات البيانات التجريبية:
+المستخدمين: 5
+المنتجات: 50
+الطلبات: 100
+العملاء: 25
+الفواتير: 75
+```
+
+---
+
+## 🎯 مثال شامل للاستخدام
+
+### سيناريو: يوم في حياة مطور يستخدم V5
+
+```bash
+# ==================== بداية اليوم ====================
+$ date && echo "🔄 بدء يوم العمل"
+Mon Jan  1 09:00:00 +03 2024
+🔄 بدء يوم العمل
+
+# فحص حالة النظام
+$ ./scripts/system-health-check.sh
+🔍 فحص صحة النظام - Mon Jan  1 09:00:00 +03 2024
+========================================
+💾 استخدام الذاكرة:
+              total        used        free      shared  buff/cache   available
+Mem:           8.0G        3.2G        2.1G        0.2G        2.7G        4.3G
+
+💿 استخدام المساحة:
+Filesystem      Size  Used Avail Use% Mounted on
+/dev/sda1       100G   45G   55G  45% /
+
+🔌 المنافذ المفتوحة:
+tcp6  0  0  0.0.0.0:8000  :::*  LISTEN  12345/php
+tcp6  0  0  0.0.0.0:5173  :::*  LISTEN  12346/node
+
+🗄️ فحص قاعدة البيانات:
+DB Connection: OK
+
+⚡ فحص Cache:
+Cache Driver: file
+Cache Test: OK
+
+✅ انتهى الفحص
+
+# ==================== تطوير ميزة جديدة ====================
+$ git checkout -b feature/improved-dashboard
+Switched to a new branch 'feature/improved-dashboard'
+
+# إنشاء controller جديد
+$ php artisan make:controller DashboardController
+Controller created successfully.
+
+# إضافة endpoint جديد
+$ php artisan route:list | grep dashboard
+GET|HEAD  | dashboard ................... App\Http\Controllers\DashboardController@index
+
+# اختبار الـ controller
+$ curl http://localhost:8000/dashboard
+{
+  "message": "Dashboard data retrieved successfully",
+  "data": {
+    "total_users": 25,
+    "total_products": 150,
+    "total_orders": 340,
+    "revenue": 45890.50,
+    "trends": {
+      "users_growth": "+12%",
+      "orders_growth": "+8%",
+      "revenue_growth": "+15%"
+    }
+  }
+}
+
+# ==================== تشغيل الاختبارات ====================
+$ php artisan test
+   PASS  Tests\Unit\UserTest
+  ✓ user can be created with valid data                           0.05s
+  ✓ user cannot be created with invalid email                     0.02s
+  ✓ user has default role                                         0.01s
+
+   PASS  Tests\Feature\DashboardTest
+  ✓ dashboard endpoint returns success response                   0.12s
+  ✓ dashboard returns correct data structure                      0.08s
+  ✓ unauthorized user cannot access dashboard                     0.05s
+
+  Tests:  6 passed (6 assertions)
+  Duration: 0.33s
+
+# ==================== فحص الأمان ====================
+$ composer audit
+No security vulnerability advisories found
+
+$ php artisan security:check
+🔒 فحص إعدادات الأمان:
+
+✅ APP_KEY مُولد
+✅ SESSION_SECURE_COOKIE مُفعل
+✅ APP_DEBUG مُعطل في الإنتاج
+✅ CSRF protection مُفعل
+✅ SQL injection protection مُفعل
+✅ Rate limiting مُفعل
+
+📊 نقاط الأمان: 6/6
+
+✅ جميع إعدادات الأمان صحيحة
+
+# ==================== مراقبة الأداء ====================
+$ ab -n 100 -c 10 http://localhost:8000/dashboard
+This is ApacheBench, Version 2.3 <$Revision: 1879490 $>
+Copyright 1996 Adam Twiss, Zeus Technology Ltd, http://www.zeustech.net/
+Licensed to The Apache Software Foundation, http://www.apache.org/
+
+Benchmarking localhost (be patient).....done
+
+Server Software:        Laravel
+Server Hostname:        localhost
+Server Port:            8000
+
+Document Path:          /dashboard
+Document Length:        342 bytes
+
+Concurrency Level:      10
+Time taken for tests:   1.234 seconds
+Complete requests:      100
+Failed requests:        0
+Total transferred:      53000 bytes
+HTML transferred:       34200 bytes
+Requests per second:    81.04 [#/sec] (mean)
+Time per request:       123.400 [ms] (mean)
+Time per request:       12.340 [ms] (mean, across all concurrent requests)
+Transfer rate:          41.95 [Kbytes/sec] received
+
+Percentage of the requests served within a certain time (ms)
+  50%     120
+  66%     125
+  75%     130
+  80%     135
+  90%     145
+  95%     155
+  98%     165
+  99%     175
+ 100%     180 (longest request)
+
+# ==================== إنشاء تقرير يومي ====================
+$ php artisan system:monitor --email=dev@v5-system.com
+
+🔍 بدء فحص النظام...
+Database: healthy
+Cache: healthy
+Queue: running
+Memory: 45.2 MB (2.3%)
+Disk: 45% used
+Response Time: 0.123 seconds average
+
+✅ تم إرسال تقرير الصحة إلى dev@v5-system.com
+
+# ==================== إنهاء اليوم ====================
+$ git add .
+$ git commit -m "Add improved dashboard with performance metrics"
+$ git push origin feature/improved-dashboard
+
+$ echo "🎉 تم إنهاء يوم العمل بنجاح!"
+🎉 تم إنهاء يوم العمل بنجاح!
+
+$ date
+Mon Jan  1 17:30:00 +03 2024
+```
+
+---
+
+**🎯 تلخيص الأمثلة:**
+
+هذه الأمثلة العملية تُظهر:
+
+1. **العملية الكاملة** - من الإعداد إلى الاستخدام
+2. **التشخيص والإصلاح** - حل المشاكل خطوة بخطوة  
+3. **المراقبة** - فحص مستمر للأداء والأمان
+4. **الاختبار** - التأكد من عمل كل شيء بشكل صحيح
+5. **الاستخدام اليومي** - سيناريوهات واقعية
+6. **الحلول المتقدمة** - للأشخاص ذوي الخبرة
+
+**💡 نصائح للاستفادة القصوى:**
+
+- طبق هذه الأمثلة على مشروعك الحقيقي
+- اضبط الأوامر حسب بيئتك
+- احتفظ بملاحظاتك على ما يعمل وما لا يعمل
+- استخدم هذه الأمثلة كمرجع في المستقبل
+
+---
+
+**آخر تحديث**: 2025-11-06  
+**رقم الإصدار**: 1.0  
+**بواسطة**: فريق تطوير V5

@@ -1,0 +1,104 @@
+{
+    "order_id": 3,
+    "order_number": "125",
+    "weight_flow": {
+        "order": {
+            "id": 3,
+            "required_weight": "1200.00",
+            "delivered_weight": null,
+            "status": "delivered",
+            "current_stage": "تسليم"
+        },
+        "warehouse_transfer": {
+            "id": 1,
+            "weight": "2000.00",
+            "status": "completed",
+            "source_warehouse": 1,
+            "destination_warehouse": 4
+        },
+        "sorting": {
+            "weight_received": "0.00",
+            "weight_transferred": "0.00",
+            "roll1_weight": null,
+            "roll2_weight": null,
+            "waste_weight": "0.00",
+            "status": "pending"
+        },
+        "waste": {
+            "transfers": 2,
+            "total_weight": 20,
+            "audit_logs": 0
+        }
+    },
+    "inventory_checks": {
+        "المستودع الرئيسي 1": {
+            "total_stock": "583706",
+            "negative_entries": 0
+        },
+        "المستودع الرئيسي 2": {
+            "total_stock": 0,
+            "negative_entries": 0
+        },
+        "مستودع خردة 1": {
+            "total_stock": "220",
+            "negative_entries": 0
+        },
+        "مستودع فرز 1": {
+            "total_stock": "149506",
+            "negative_entries": 0
+        },
+        "مستودع الحضانة": {
+            "total_stock": 0,
+            "negative_entries": 0
+        }
+    },
+    "test_results": [
+        [
+            "PASSED",
+            "Order initialization",
+            "Order 125 loaded successfully"
+        ],
+        [
+            "PASSED",
+            "Warehouse transfer trace",
+            "Transfer ID: 1, Weight: 2000.00kg"
+        ],
+        [
+            "PASSED",
+            "Sorting weight balance",
+            "Total: 0kg, Received: 0.00kg"
+        ],
+        [
+            "WARNING",
+            "Cutting stage verification",
+            "No cutting result record"
+        ],
+        [
+            "WARNING",
+            "Packaging verification",
+            "No packaging transfer records"
+        ],
+        [
+            "WARNING",
+            "Delivery verification",
+            "Order not delivered or weight not recorded"
+        ],
+        [
+            "PASSED",
+            "Waste tracking",
+            "Waste tracked: 1, Total: 20kg"
+        ],
+        [
+            "PASSED",
+            "Inventory accuracy",
+            "All warehouse inventories validated"
+        ],
+        [
+            "PASSED",
+            "Weight conservation",
+            "Final: 0kg + Waste: 20kg <= Initial: 2000.00kg"
+        ]
+    ],
+    "generated_at": "2025-11-09T07:56:05.342687Z",
+    "verification_status": "WARNING"
+}

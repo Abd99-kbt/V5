@@ -1,0 +1,64 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        // Update existing users with role-based Arabic usernames
+        $usernameUpdates = [
+            // مدير_شامل (General Manager)
+            ['name' => 'Ahmed Mohamed', 'username' => 'مدير_شامل'],
+            // موظف_مبيعات (Sales Employee)
+            ['name' => 'Fatima Ahmed Ali', 'username' => 'موظف_مبيعات'],
+            // مدير_مبيعات (Sales Manager)
+            ['name' => 'Mohammad Abdullah', 'username' => 'مدير_مبيعات'],
+            // مسؤول_مستودع (Warehouse Manager)
+            ['name' => 'Saad Hassan', 'username' => 'مسؤول_مستودع'],
+            // موظف_مستودع (Warehouse Employee)
+            ['name' => 'Khalid Mahmoud', 'username' => 'موظف_مستودع'],
+            // مسؤول_فرازة (Sorting Manager)
+            ['name' => 'Abdulrahman Mohammad', 'username' => 'مسؤول_فرازة'],
+            // مسؤول_قصاصة (Cutting Manager)
+            ['name' => 'Youssef Ali', 'username' => 'مسؤول_قصاصة'],
+            // محاسب (Accountant)
+            ['name' => 'Nour Al Din', 'username' => 'محاسب'],
+            // مسؤول_تسليم (Delivery Manager)
+            ['name' => 'Ziad Mohammad', 'username' => 'مسؤول_تسليم'],
+        ];
+
+        foreach ($usernameUpdates as $update) {
+            DB::table('users')
+                ->where('name', $update['name'])
+                ->update(['username' => $update['username']]);
+        }
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        // Remove usernames
+        DB::table('users')
+            ->whereIn('username', [
+                'مدير_شامل',
+                'موظف_مبيعات',
+                'مدير_مبيعات',
+                'مسؤول_مستودع',
+                'موظف_مستودع',
+                'مسؤول_فرازة',
+                'مسؤول_قصاصة',
+                'محاسب',
+                'مسؤول_تسليم',
+            ])
+            ->update(['username' => null]);
+    }
+};

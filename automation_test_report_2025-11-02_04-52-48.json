@@ -1,0 +1,367 @@
+{
+    "summary": {
+        "total_tests": 57,
+        "passed_tests": 55,
+        "failed_tests": 2,
+        "success_rate_percentage": 96.49,
+        "execution_time_seconds": 8.0e-6,
+        "timestamp": "2025-11-02T04:52:48.821825Z"
+    },
+    "service_status": {
+        "SmartMaterialSelectionService": "success",
+        "AutomatedPricingService": "success",
+        "AutomatedApprovalService": "success",
+        "AutomatedQualityControlService": "success",
+        "AutomatedReportingService": "success",
+        "AIPredictionService": "success",
+        "IoTIntegrationService": "success",
+        "AutomationScheduler": "success"
+    },
+    "test_results": [
+        {
+            "test_name": "تحليل متطلبات الطلب",
+            "passed": true,
+            "message": "تم تحليل متطلبات الطلب بنجاح",
+            "timestamp": "2025-11-02T04:52:48.469485Z"
+        },
+        {
+            "test_name": "البحث عن المواد المثالية",
+            "passed": false,
+            "message": "فشل الاختبار",
+            "timestamp": "2025-11-02T04:52:48.473018Z"
+        },
+        {
+            "test_name": "اقتراح الكميات",
+            "passed": true,
+            "message": "تم اقتراح الكميات بنجاح",
+            "timestamp": "2025-11-02T04:52:48.473492Z"
+        },
+        {
+            "test_name": "التشغيل التلقائي",
+            "passed": true,
+            "message": "تم التشغيل التلقائي بنجاح",
+            "timestamp": "2025-11-02T04:52:48.474954Z"
+        },
+        {
+            "test_name": "حساب السعر الشامل",
+            "passed": true,
+            "message": "تم حساب السعر الشامل بنجاح",
+            "timestamp": "2025-11-02T04:52:48.630162Z"
+        },
+        {
+            "test_name": "حساب السعر الأساسي",
+            "passed": true,
+            "message": "تم حساب السعر الأساسي بنجاح",
+            "timestamp": "2025-11-02T04:52:48.630672Z"
+        },
+        {
+            "test_name": "حساب التكاليف الإضافية",
+            "passed": true,
+            "message": "تم حساب التكاليف الإضافية بنجاح",
+            "timestamp": "2025-11-02T04:52:48.631579Z"
+        },
+        {
+            "test_name": "تقدير تكاليف الهدر",
+            "passed": true,
+            "message": "تم تقدير تكاليف الهدر بنجاح",
+            "timestamp": "2025-11-02T04:52:48.632522Z"
+        },
+        {
+            "test_name": "حساب التكاليف العامة",
+            "passed": true,
+            "message": "تم حساب التكاليف العامة بنجاح",
+            "timestamp": "2025-11-02T04:52:48.634587Z"
+        },
+        {
+            "test_name": "حساب هامش الربح المثالي",
+            "passed": true,
+            "message": "تم حساب هامش الربح بنجاح",
+            "timestamp": "2025-11-02T04:52:48.638289Z"
+        },
+        {
+            "test_name": "توليد تفصيل السعر",
+            "passed": true,
+            "message": "تم توليد تفصيل السعر بنجاح",
+            "timestamp": "2025-11-02T04:52:48.638851Z"
+        },
+        {
+            "test_name": "الموافقة التلقائية",
+            "passed": true,
+            "message": "تم اختبار الموافقة التلقائية",
+            "timestamp": "2025-11-02T04:52:48.646114Z"
+        },
+        {
+            "test_name": "التحقق من العملية الروتينية",
+            "passed": true,
+            "message": "تم التحقق من العملية الروتينية",
+            "timestamp": "2025-11-02T04:52:48.646740Z"
+        },
+        {
+            "test_name": "التحقق الذكي",
+            "passed": true,
+            "message": "تم التحقق الذكي",
+            "timestamp": "2025-11-02T04:52:48.647705Z"
+        },
+        {
+            "test_name": "التحقق من توازن الوزن",
+            "passed": true,
+            "message": "تم التحقق من توازن الوزن",
+            "timestamp": "2025-11-02T04:52:48.648481Z"
+        },
+        {
+            "test_name": "التحقق من معايير الجودة",
+            "passed": true,
+            "message": "تم التحقق من معايير الجودة",
+            "timestamp": "2025-11-02T04:52:48.649403Z"
+        },
+        {
+            "test_name": "التحقق من الامتثال الزمني",
+            "passed": true,
+            "message": "تم التحقق من الامتثال الزمني",
+            "timestamp": "2025-11-02T04:52:48.650245Z"
+        },
+        {
+            "test_name": "التحقق من كفاءة التكلفة",
+            "passed": true,
+            "message": "تم التحقق من كفاءة التكلفة",
+            "timestamp": "2025-11-02T04:52:48.652427Z"
+        },
+        {
+            "test_name": "فحص الجودة التلقائي",
+            "passed": true,
+            "message": "تم فحص الجودة بنجاح",
+            "timestamp": "2025-11-02T04:52:48.658191Z"
+        },
+        {
+            "test_name": "التحقق من الأبعاد تلقائياً",
+            "passed": true,
+            "message": "تم التحقق من الأبعاد",
+            "timestamp": "2025-11-02T04:52:48.658754Z"
+        },
+        {
+            "test_name": "التحقق من توازن الوزن",
+            "passed": true,
+            "message": "تم التحقق من توازن الوزن",
+            "timestamp": "2025-11-02T04:52:48.659127Z"
+        },
+        {
+            "test_name": "تحليل الجودة البصرية",
+            "passed": true,
+            "message": "تم تحليل الجودة البصرية",
+            "timestamp": "2025-11-02T04:52:48.659470Z"
+        },
+        {
+            "test_name": "التحقق من المواصفات",
+            "passed": true,
+            "message": "تم التحقق من المواصفات",
+            "timestamp": "2025-11-02T04:52:48.659847Z"
+        },
+        {
+            "test_name": "حساب نقاط الجودة الإجمالية",
+            "passed": true,
+            "message": "تم حساب نقاط الجودة",
+            "timestamp": "2025-11-02T04:52:48.660467Z"
+        },
+        {
+            "test_name": "الحاجة للمراجعة البشرية",
+            "passed": true,
+            "message": "تم تقييم الحاجة للمراجعة البشرية",
+            "timestamp": "2025-11-02T04:52:48.661062Z"
+        },
+        {
+            "test_name": "الحصول على الأبعاد المقاسة",
+            "passed": true,
+            "message": "تم الحصول على الأبعاد المقاسة",
+            "timestamp": "2025-11-02T04:52:48.661540Z"
+        },
+        {
+            "test_name": "التشغيل التلقائي لمراقبة الجودة",
+            "passed": true,
+            "message": "تم التشغيل التلقائي بنجاح",
+            "timestamp": "2025-11-02T04:52:48.663504Z"
+        },
+        {
+            "test_name": "توليد التقارير اليومية",
+            "passed": true,
+            "message": "تم توليد التقارير اليومية",
+            "timestamp": "2025-11-02T04:52:48.673648Z"
+        },
+        {
+            "test_name": "تقرير الإنتاج",
+            "passed": true,
+            "message": "تم توليد تقرير الإنتاج",
+            "timestamp": "2025-11-02T04:52:48.675380Z"
+        },
+        {
+            "test_name": "تقرير الهدر",
+            "passed": false,
+            "message": "فشل الاختبار",
+            "timestamp": "2025-11-02T04:52:48.677400Z"
+        },
+        {
+            "test_name": "تقرير الكفاءة",
+            "passed": true,
+            "message": "تم توليد تقرير الكفاءة",
+            "timestamp": "2025-11-02T04:52:48.688399Z"
+        },
+        {
+            "test_name": "تقرير المبيعات",
+            "passed": true,
+            "message": "تم توليد تقرير المبيعات",
+            "timestamp": "2025-11-02T04:52:48.706213Z"
+        },
+        {
+            "test_name": "إرسال التنبيهات التلقائية",
+            "passed": true,
+            "message": "تم إرسال التنبيهات",
+            "timestamp": "2025-11-02T04:52:48.712673Z"
+        },
+        {
+            "test_name": "تنبيهات المخزون المنخفض",
+            "passed": true,
+            "message": "تم إرسال تنبيهات المخزون",
+            "timestamp": "2025-11-02T04:52:48.718158Z"
+        },
+        {
+            "test_name": "تنبيهات التأخير",
+            "passed": true,
+            "message": "تم إرسال تنبيهات التأخير",
+            "timestamp": "2025-11-02T04:52:48.719986Z"
+        },
+        {
+            "test_name": "تنبيهات الجودة",
+            "passed": true,
+            "message": "تم إرسال تنبيهات الجودة",
+            "timestamp": "2025-11-02T04:52:48.721418Z"
+        },
+        {
+            "test_name": "تنبيهات الصيانة",
+            "passed": true,
+            "message": "تم إرسال تنبيهات الصيانة",
+            "timestamp": "2025-11-02T04:52:48.723117Z"
+        },
+        {
+            "test_name": "التشغيل التلقائي للتقارير",
+            "passed": true,
+            "message": "تم التشغيل التلقائي بنجاح",
+            "timestamp": "2025-11-02T04:52:48.735353Z"
+        },
+        {
+            "test_name": "التنبؤ بوقت إكمال الطلب",
+            "passed": true,
+            "message": "تم التنبؤ بوقت الإكمال",
+            "timestamp": "2025-11-02T04:52:48.743028Z"
+        },
+        {
+            "test_name": "التنبؤ بنسبة الهدر",
+            "passed": true,
+            "message": "تم التنبؤ بنسبة الهدر",
+            "timestamp": "2025-11-02T04:52:48.792736Z"
+        },
+        {
+            "test_name": "تحليل البيانات التاريخية",
+            "passed": true,
+            "message": "تم تحليل البيانات التاريخية",
+            "timestamp": "2025-11-02T04:52:48.794070Z"
+        },
+        {
+            "test_name": "تدريب نموذج التنبؤ",
+            "passed": true,
+            "message": "تم تدريب النموذج",
+            "timestamp": "2025-11-02T04:52:48.795733Z"
+        },
+        {
+            "test_name": "حساب تعقيد الطلب",
+            "passed": true,
+            "message": "تم حساب تعقيد الطلب",
+            "timestamp": "2025-11-02T04:52:48.796850Z"
+        },
+        {
+            "test_name": "الحصول على العامل الموسمي",
+            "passed": true,
+            "message": "تم الحصول على العامل الموسمي",
+            "timestamp": "2025-11-02T04:52:48.797231Z"
+        },
+        {
+            "test_name": "تحديد عوامل الخطر",
+            "passed": true,
+            "message": "تم تحديد عوامل الخطر",
+            "timestamp": "2025-11-02T04:52:48.800152Z"
+        },
+        {
+            "test_name": "التنبؤ بالطلب",
+            "passed": true,
+            "message": "تم التنبؤ بالطلب",
+            "timestamp": "2025-11-02T04:52:48.801977Z"
+        },
+        {
+            "test_name": "الاتصال بمعدات الإنتاج",
+            "passed": true,
+            "message": "تم الاتصال بمعدات الإنتاج",
+            "timestamp": "2025-11-02T04:52:48.803558Z"
+        },
+        {
+            "test_name": "الاتصال بآلات القص",
+            "passed": true,
+            "message": "تم الاتصال بآلات القص",
+            "timestamp": "2025-11-02T04:52:48.803943Z"
+        },
+        {
+            "test_name": "الاتصال بموازين الوزن",
+            "passed": true,
+            "message": "تم الاتصال بموازين الوزن",
+            "timestamp": "2025-11-02T04:52:48.804227Z"
+        },
+        {
+            "test_name": "الاتصال بكاميرات الجودة",
+            "passed": true,
+            "message": "تم الاتصال بكاميرات الجودة",
+            "timestamp": "2025-11-02T04:52:48.804491Z"
+        },
+        {
+            "test_name": "الاتصال بالحساسات",
+            "passed": true,
+            "message": "تم الاتصال بالحساسات",
+            "timestamp": "2025-11-02T04:52:48.804767Z"
+        },
+        {
+            "test_name": "استقبال البيانات الزمنية الحقيقية",
+            "passed": true,
+            "message": "تم استقبال البيانات الزمنية",
+            "timestamp": "2025-11-02T04:52:48.812260Z"
+        },
+        {
+            "test_name": "تحديث حالة الطلب",
+            "passed": true,
+            "message": "تم تحديث حالة الطلب",
+            "timestamp": "2025-11-02T04:52:48.816920Z"
+        },
+        {
+            "test_name": "تسجيل القياسات",
+            "passed": true,
+            "message": "تم تسجيل القياسات",
+            "timestamp": "2025-11-02T04:52:48.820106Z"
+        },
+        {
+            "test_name": "الحصول على حالة الاتصال",
+            "passed": true,
+            "message": "تم الحصول على حالة الاتصال",
+            "timestamp": "2025-11-02T04:52:48.820539Z"
+        },
+        {
+            "test_name": "قطع الاتصال",
+            "passed": true,
+            "message": "تم قطع الاتصال بنجاح",
+            "timestamp": "2025-11-02T04:52:48.820935Z"
+        },
+        {
+            "test_name": "إنشاء مجدول الأتمتة",
+            "passed": true,
+            "message": "تم إنشاء مجدول الأتمتة بنجاح",
+            "timestamp": "2025-11-02T04:52:48.821495Z"
+        }
+    ],
+    "recommendations": [
+        "جميع الخدمات تعمل بشكل صحيح"
+    ]
+}

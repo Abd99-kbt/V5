@@ -1,0 +1,23 @@
+╔═══════════════════════════════════════════════════════════════╗
+║                FILAMENT ADMIN QUICK ACCESS                       ║
+╚═══════════════════════════════════════════════════════════════╝
+
+🔗 URL: http://localhost:8080/admin/login
+👤 Username: مدير_شامل
+🔑 Password: password123
+
+❌ DON'T USE:
+   • http://127.0.0.1:8000/login
+   • http://localhost:8000/login
+
+✅ ALWAYS USE:
+   • http://localhost:8080/admin/login
+
+📋 Access Steps:
+1. Open Browser
+2. Navigate to: http://localhost:8080/admin/login
+3. Enter Username: مدير_شامل
+4. Enter Password: password123
+5. Click Login
+
+🎯 Target: Access Filament admin dashboard

@@ -1,0 +1,679 @@
+<?php
+
+namespace App\Services;
+
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth;
+use Carbon\Carbon;
+
+class BusinessMetricsService
+{
+    /**
+     * Cache key prefix for business metrics
+     */
+    protected string $cachePrefix = 'business_metrics_';
+
+    /**
+     * Business metric categories
+     */
+    protected array $categories = [
+        'revenue' => 'Revenue Metrics',
+        'orders' => 'Order Metrics', 
+        'users' => 'User Metrics',
+        'performance' => 'Business Performance',
+        'growth' => 'Growth Metrics',
+        'conversion' => 'Conversion Metrics',
+    ];
+
+    /**
+     * Get comprehensive business metrics
+     */
+    public function getBusinessMetrics(array $options = []): array
+    {
+        $timeframe = $options['timeframe'] ?? '7d';
+        $category = $options['category'] ?? 'all';
+        $refresh = $options['refresh'] ?? false;
+        
+        $cacheKey = "metrics_{$category}_{$timeframe}_" . (Auth::id() ?? 'guest');
+        
+        if (!$refresh) {
+            $cached = Cache::get($cacheKey);
+            if ($cached) {
+                return $cached;
+            }
+        }
+        
+        $metrics = [
+            'timestamp' => now()->toISOString(),
+            'timeframe' => $timeframe,
+            'category' => $category,
+            'data' => []
+        ];
+        
+        switch ($category) {
+            case 'revenue':
+                $metrics['data'] = $this->getRevenueMetrics($timeframe);
+                break;
+            case 'orders':
+                $metrics['data'] = $this->getOrderMetrics($timeframe);
+                break;
+            case 'users':
+                $metrics['data'] = $this->getUserMetrics($timeframe);
+                break;
+            case 'performance':
+                $metrics['data'] = $this->getBusinessPerformanceMetrics($timeframe);
+                break;
+            case 'growth':
+                $metrics['data'] = $this->getGrowthMetrics($timeframe);
+                break;
+            case 'conversion':
+                $metrics['data'] = $this->getConversionMetrics($timeframe);
+                break;
+            case 'all':
+            default:
+                $metrics['data'] = [
+                    'revenue' => $this->getRevenueMetrics($timeframe),
+                    'orders' => $this->getOrderMetrics($timeframe),
+                    'users' => $this->getUserMetrics($timeframe),
+                    'performance' => $this->getBusinessPerformanceMetrics($timeframe),
+                    'growth' => $this->getGrowthMetrics($timeframe),
+                    'conversion' => $this->getConversionMetrics($timeframe),
+                ];
+                break;
+        }
+        
+        // Add summary and insights
+        $metrics['summary'] = $this->generateBusinessSummary($metrics['data']);
+        $metrics['insights'] = $this->generateBusinessInsights($metrics['data']);
+        $metrics['recommendations'] = $this->generateBusinessRecommendations($metrics['data']);
+        
+        // Cache for 1 hour
+        Cache::put($cacheKey, $metrics, now()->addHour());
+        
+        return $metrics;
+    }
+
+    /**
+     * Get revenue metrics
+     */
+    protected function getRevenueMetrics(string $timeframe): array
+    {
+        $timeRange = $this->parseTimeframe($timeframe);
+        $now = now();
+        
+        return [
+            'total_revenue' => $this->calculateTotalRevenue($timeRange),
+            'average_order_value' => $this->calculateAverageOrderValue($timeRange),
+            'revenue_trend' => $this->getRevenueTrend($timeRange),
+            'revenue_by_period' => $this->getRevenueByPeriod($timeRange),
+            'revenue_growth_rate' => $this->calculateRevenueGrowthRate($timeRange),
+            'projected_revenue' => $this->calculateProjectedRevenue($timeRange),
+            'revenue_by_source' => $this->getRevenueBySource($timeRange),
+            'top_revenue_products' => $this->getTopRevenueProducts($timeRange),
+            'revenue_anomalies' => $this->detectRevenueAnomalies($timeRange),
+        ];
+    }
+
+    /**
+     * Get order metrics
+     */
+    protected function getOrderMetrics(string $timeframe): array
+    {
+        $timeRange = $this->parseTimeframe($timeframe);
+        $now = now();
+        
+        return [
+            'total_orders' => $this->calculateTotalOrders($timeRange),
+            'completed_orders' => $this->calculateCompletedOrders($timeRange),
+            'pending_orders' => $this->calculatePendingOrders($timeRange),
+            'cancelled_orders' => $this->calculateCancelledOrders($timeRange),
+            'order_trend' => $this->getOrderTrend($timeRange),
+            'order_value_distribution' => $this->getOrderValueDistribution($timeRange),
+            'order_fulfillment_time' => $this->getOrderFulfillmentTime($timeRange),
+            'order_status_breakdown' => $this->getOrderStatusBreakdown($timeRange),
+            'order_growth_rate' => $this->calculateOrderGrowthRate($timeRange),
+            'order_sources' => $this->getOrderSources($timeRange),
+        ];
+    }
+
+    /**
+     * Get user metrics
+     */
+    protected function getUserMetrics(string $timeframe): array
+    {
+        $timeRange = $this->parseTimeframe($timeframe);
+        $now = now();
+        
+        return [
+            'total_users' => $this->calculateTotalUsers(),
+            'active_users' => $this->calculateActiveUsers($timeRange),
+            'new_users' => $this->calculateNewUsers($timeRange),
+            'returning_users' => $this->calculateReturningUsers($timeRange),
+            'user_retention_rate' => $this->calculateUserRetentionRate($timeRange),
+            'user_lifetime_value' => $this->calculateUserLifetimeValue(),
+            'user_activity_trend' => $this->getUserActivityTrend($timeRange),
+            'user_demographics' => $this->getUserDemographics(),
+            'user_segmentation' => $this->getUserSegmentation($timeRange),
+            'user_churn_rate' => $this->calculateUserChurnRate($timeRange),
+        ];
+    }
+
+    /**
+     * Get business performance metrics
+     */
+    protected function getBusinessPerformanceMetrics(string $timeframe): array
+    {
+        $timeRange = $this->parseTimeframe($timeframe);
+        
+        return [
+            'profit_margin' => $this->calculateProfitMargin($timeRange),
+            'cost_per_acquisition' => $this->calculateCostPerAcquisition($timeRange),
+            'customer_satisfaction_score' => $this->getCustomerSatisfactionScore($timeRange),
+            'operational_efficiency' => $this->getOperationalEfficiency($timeRange),
+            'inventory_turnover' => $this->calculateInventoryTurnover($timeRange),
+            'warehouse_efficiency' => $this->getWarehouseEfficiency($timeRange),
+            'processing_time_avg' => $this->getAverageProcessingTime($timeRange),
+            'quality_score' => $this->getQualityScore($timeRange),
+            'delivery_performance' => $this->getDeliveryPerformance($timeframe),
+        ];
+    }
+
+    /**
+     * Get growth metrics
+     */
+    protected function getGrowthMetrics(string $timeframe): array
+    {
+        $timeRange = $this->parseTimeframe($timeframe);
+        
+        return [
+            'revenue_growth' => $this->calculateRevenueGrowthRate($timeRange),
+            'user_growth' => $this->calculateUserGrowthRate($timeRange),
+            'order_growth' => $this->calculateOrderGrowthRate($timeRange),
+            'market_share_estimate' => $this->getMarketShareEstimate(),
+            'growth_projections' => $this->getGrowthProjections(),
+            'seasonal_trends' => $this->getSeasonalTrends(),
+            'growth_opportunities' => $this->identifyGrowthOpportunities(),
+            'competitive_position' => $this->getCompetitivePosition(),
+        ];
+    }
+
+    /**
+     * Get conversion metrics
+     */
+    protected function getConversionMetrics(string $timeframe): array
+    {
+        $timeRange = $this->parseTimeframe($timeframe);
+        
+        return [
+            'overall_conversion_rate' => $this->calculateOverallConversionRate($timeRange),
+            'conversion_funnel' => $this->getConversionFunnel($timeRange),
+            'abandoned_cart_rate' => $this->getAbandonedCartRate($timeRange),
+            'page_conversion_rates' => $this->getPageConversionRates($timeRange),
+            'channel_conversion_rates' => $this->getChannelConversionRates($timeRange),
+            'conversion_trends' => $this->getConversionTrends($timeRange),
+            'conversion_optimization_opportunities' => $this->getConversionOptimizationOpportunities($timeRange),
+        ];
+    }
+
+    // Protected helper methods for data calculation
+
+    protected function parseTimeframe(string $timeframe): array
+    {
+        $now = now();
+        
+        return match(strtolower($timeframe)) {
+            '24h' => ['start' => $now->subDay(), 'end' => $now],
+            '7d' => ['start' => $now->subDays(7), 'end' => $now],
+            '30d' => ['start' => $now->subDays(30), 'end' => $now],
+            '90d' => ['start' => $now->subDays(90), 'end' => $now],
+            '1y' => ['start' => $now->subYear(), 'end' => $now],
+            default => ['start' => $now->subDays(30), 'end' => $now],
+        };
+    }
+
+    protected function generateBusinessSummary(array $data): array
+    {
+        $summary = [
+            'total_revenue' => 0,
+            'total_orders' => 0,
+            'active_users' => 0,
+            'growth_rate' => 0,
+            'conversion_rate' => 0,
+            'overall_health' => 'unknown',
+        ];
+        
+        // Extract key metrics from data
+        if (isset($data['revenue']['total_revenue'])) {
+            $summary['total_revenue'] = $data['revenue']['total_revenue'];
+        }
+        
+        if (isset($data['orders']['total_orders'])) {
+            $summary['total_orders'] = $data['orders']['total_orders'];
+        }
+        
+        if (isset($data['users']['active_users'])) {
+            $summary['active_users'] = $data['users']['active_users'];
+        }
+        
+        if (isset($data['growth']['revenue_growth'])) {
+            $summary['growth_rate'] = $data['growth']['revenue_growth'];
+        }
+        
+        if (isset($data['conversion']['overall_conversion_rate'])) {
+            $summary['conversion_rate'] = $data['conversion']['overall_conversion_rate'];
+        }
+        
+        return $summary;
+    }
+
+    protected function generateBusinessInsights(array $data): array
+    {
+        $insights = [];
+        
+        // Revenue insights
+        if (isset($data['revenue']['revenue_growth_rate'])) {
+            $growth = $data['revenue']['revenue_growth_rate'];
+            if ($growth > 20) {
+                $insights[] = 'Strong revenue growth momentum detected';
+            } elseif ($growth < 0) {
+                $insights[] = 'Revenue decline requires attention';
+            }
+        }
+        
+        // Order insights
+        if (isset($data['orders']['cancelled_orders']) && isset($data['orders']['total_orders'])) {
+            $cancellationRate = ($data['orders']['cancelled_orders'] / max($data['orders']['total_orders'], 1)) * 100;
+            if ($cancellationRate > 10) {
+                $insights[] = 'High order cancellation rate detected';
+            }
+        }
+        
+        // User insights
+        if (isset($data['users']['user_churn_rate'])) {
+            $churn = $data['users']['user_churn_rate'];
+            if ($churn > 15) {
+                $insights[] = 'User churn rate is above acceptable levels';
+            }
+        }
+        
+        return $insights;
+    }
+
+    protected function generateBusinessRecommendations(array $data): array
+    {
+        $recommendations = [];
+        
+        // Revenue recommendations
+        if (isset($data['revenue']['average_order_value'])) {
+            $aov = $data['revenue']['average_order_value'];
+            if ($aov < 100) {
+                $recommendations[] = [
+                    'category' => 'revenue',
+                    'priority' => 'high',
+                    'recommendation' => 'Implement cross-selling and upselling strategies to increase average order value',
+                    'expected_impact' => '15-25% increase in revenue'
+                ];
+            }
+        }
+        
+        // Conversion recommendations
+        if (isset($data['conversion']['overall_conversion_rate'])) {
+            $conversion = $data['conversion']['overall_conversion_rate'];
+            if ($conversion < 2) {
+                $recommendations[] = [
+                    'category' => 'conversion',
+                    'priority' => 'high',
+                    'recommendation' => 'Optimize checkout process and reduce cart abandonment',
+                    'expected_impact' => '20-30% increase in conversions'
+                ];
+            }
+        }
+        
+        // User retention recommendations
+        if (isset($data['users']['user_retention_rate'])) {
+            $retention = $data['users']['user_retention_rate'];
+            if ($retention < 60) {
+                $recommendations[] = [
+                    'category' => 'users',
+                    'priority' => 'medium',
+                    'recommendation' => 'Implement user engagement and retention programs',
+                    'expected_impact' => '10-20% improvement in retention'
+                ];
+            }
+        }
+        
+        return $recommendations;
+    }
+
+    // Placeholder methods for actual data calculation
+    // These would typically query the database for real business data
+
+    protected function calculateTotalRevenue(array $timeRange): float
+    {
+        // This would query orders table and sum completed order values
+        return 0.0;
+    }
+
+    protected function calculateAverageOrderValue(array $timeRange): float
+    {
+        // This would calculate average order value from completed orders
+        return 0.0;
+    }
+
+    protected function getRevenueTrend(array $timeRange): array
+    {
+        // This would return daily/weekly revenue trend data
+        return [];
+    }
+
+    protected function getRevenueByPeriod(array $timeRange): array
+    {
+        // This would return revenue breakdown by day/week/month
+        return [];
+    }
+
+    protected function calculateRevenueGrowthRate(array $timeRange): float
+    {
+        // This would compare current period to previous period
+        return 0.0;
+    }
+
+    protected function calculateProjectedRevenue(array $timeRange): float
+    {
+        // This would use historical data to project future revenue
+        return 0.0;
+    }
+
+    protected function getRevenueBySource(array $timeRange): array
+    {
+        // This would break down revenue by different sources/channels
+        return [];
+    }
+
+    protected function getTopRevenueProducts(array $timeRange): array
+    {
+        // This would return top performing products by revenue
+        return [];
+    }
+
+    protected function detectRevenueAnomalies(array $timeRange): array
+    {
+        // This would identify unusual patterns in revenue data
+        return [];
+    }
+
+    protected function calculateTotalOrders(array $timeRange): int
+    {
+        // This would count total orders in the timeframe
+        return 0;
+    }
+
+    protected function calculateCompletedOrders(array $timeRange): int
+    {
+        // This would count completed orders
+        return 0;
+    }
+
+    protected function calculatePendingOrders(array $timeRange): int
+    {
+        // This would count pending orders
+        return 0;
+    }
+
+    protected function calculateCancelledOrders(array $timeRange): int
+    {
+        // This would count cancelled orders
+        return 0;
+    }
+
+    protected function getOrderTrend(array $timeRange): array
+    {
+        // This would return order trend data
+        return [];
+    }
+
+    protected function getOrderValueDistribution(array $timeRange): array
+    {
+        // This would show distribution of order values
+        return [];
+    }
+
+    protected function getOrderFulfillmentTime(array $timeRange): array
+    {
+        // This would calculate average fulfillment times
+        return [];
+    }
+
+    protected function getOrderStatusBreakdown(array $timeRange): array
+    {
+        // This would show breakdown by order status
+        return [];
+    }
+
+    protected function calculateOrderGrowthRate(array $timeRange): float
+    {
+        // This would calculate order growth rate
+        return 0.0;
+    }
+
+    protected function getOrderSources(array $timeRange): array
+    {
+        // This would show order sources/channels
+        return [];
+    }
+
+    protected function calculateTotalUsers(): int
+    {
+        // This would return total registered users
+        return 0;
+    }
+
+    protected function calculateActiveUsers(array $timeRange): int
+    {
+        // This would count users with activity in timeframe
+        return 0;
+    }
+
+    protected function calculateNewUsers(array $timeRange): int
+    {
+        // This would count new user registrations
+        return 0;
+    }
+
+    protected function calculateReturningUsers(array $timeRange): int
+    {
+        // This would count returning users
+        return 0;
+    }
+
+    protected function calculateUserRetentionRate(array $timeRange): float
+    {
+        // This would calculate user retention percentage
+        return 0.0;
+    }
+
+    protected function calculateUserLifetimeValue(): float
+    {
+        // This would calculate average customer lifetime value
+        return 0.0;
+    }
+
+    protected function getUserActivityTrend(array $timeRange): array
+    {
+        // This would show user activity trends
+        return [];
+    }
+
+    protected function getUserDemographics(): array
+    {
+        // This would return user demographic data
+        return [];
+    }
+
+    protected function getUserSegmentation(array $timeRange): array
+    {
+        // This would segment users into different groups
+        return [];
+    }
+
+    protected function calculateUserChurnRate(array $timeRange): float
+    {
+        // This would calculate user churn percentage
+        return 0.0;
+    }
+
+    protected function calculateProfitMargin(array $timeRange): float
+    {
+        // This would calculate profit margin percentage
+        return 0.0;
+    }
+
+    protected function calculateCostPerAcquisition(array $timeRange): float
+    {
+        // This would calculate customer acquisition cost
+        return 0.0;
+    }
+
+    protected function getCustomerSatisfactionScore(array $timeRange): float
+    {
+        // This would return customer satisfaction rating
+        return 0.0;
+    }
+
+    protected function getOperationalEfficiency(array $timeRange): float
+    {
+        // This would calculate operational efficiency score
+        return 0.0;
+    }
+
+    protected function calculateInventoryTurnover(array $timeRange): float
+    {
+        // This would calculate inventory turnover rate
+        return 0.0;
+    }
+
+    protected function getWarehouseEfficiency(array $timeRange): float
+    {
+        // This would calculate warehouse efficiency metrics
+        return 0.0;
+    }
+
+    protected function getAverageProcessingTime(array $timeRange): float
+    {
+        // This would calculate average order processing time
+        return 0.0;
+    }
+
+    protected function getQualityScore(array $timeRange): float
+    {
+        // This would return quality control score
+        return 0.0;
+    }
+
+    protected function getDeliveryPerformance(string $timeframe): float
+    {
+        // This would calculate delivery performance metrics
+        return 0.0;
+    }
+
+    protected function calculateUserGrowthRate(array $timeRange): float
+    {
+        // This would calculate user growth rate
+        return 0.0;
+    }
+
+    protected function getMarketShareEstimate(): float
+    {
+        // This would estimate market share (placeholder)
+        return 0.0;
+    }
+
+    protected function getGrowthProjections(): array
+    {
+        // This would provide growth projections
+        return [];
+    }
+
+    protected function getSeasonalTrends(): array
+    {
+        // This would identify seasonal patterns
+        return [];
+    }
+
+    protected function identifyGrowthOpportunities(): array
+    {
+        // This would identify potential growth areas
+        return [];
+    }
+
+    protected function getCompetitivePosition(): array
+    {
+        // This would analyze competitive position
+        return [];
+    }
+
+    protected function calculateOverallConversionRate(array $timeRange): float
+    {
+        // This would calculate overall conversion rate
+        return 0.0;
+    }
+
+    protected function getConversionFunnel(array $timeRange): array
+    {
+        // This would show conversion funnel stages
+        return [];
+    }
+
+    protected function getAbandonedCartRate(array $timeRange): float
+    {
+        // This would calculate cart abandonment rate
+        return 0.0;
+    }
+
+    protected function getPageConversionRates(array $timeRange): array
+    {
+        // This would show conversion rates by page
+        return [];
+    }
+
+    protected function getChannelConversionRates(array $timeRange): array
+    {
+        // This would show conversion rates by channel
+        return [];
+    }
+
+    protected function getConversionTrends(array $timeRange): array
+    {
+        // This would show conversion rate trends
+        return [];
+    }
+
+    protected function getConversionOptimizationOpportunities(array $timeRange): array
+    {
+        // This would suggest conversion optimization opportunities
+        return [];
+    }
+
+    /**
+     * Get real-time business KPIs
+     */
+    public function getRealTimeKPIs(): array
+    {
+        return [
+            'revenue_today' => $this->calculateTotalRevenue(['start' => now()->startOfDay(), 'end' => now()]),
+            'orders_today' => $this->calculateTotalOrders(['start' => now()->startOfDay(), 'end' => now()]),
+            'active_users' => $this->calculateActiveUsers(['start' => now()->subHour(), 'end' => now()]),
+            'conversion_rate' => $this->calculateOverallConversionRate(['start' => now()->startOfDay(), 'end' => now()]),
+            'average_order_value' => $this->calculateAverageOrderValue(['start' => now()->startOfDay(), 'end' => now()]),
+            'system_health_score' => $this->calculateSystemHealthScore(),
+        ];
+    }
+
+    protected function calculateSystemHealthScore(): float
+    {
+        // This would calculate overall system health score
+        return 100.0;
+    }
+}

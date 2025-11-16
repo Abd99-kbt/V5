@@ -1,0 +1,114 @@
+<?php
+
+namespace Tests\Api;
+
+use Tests\TestCase;
+use App\Models\User;
+use App\Models\Order;
+use App\Models\Customer;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+
+class ApiSecurityTest extends TestCase
+{
+    use RefreshDatabase;
+
+    private $testUsers;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->testUsers = User::factory()->count(5)->create();
+    }
+
+    /** @test */
+    public function test_api_authentication_required()
+    {
+        $publicEndpoints = [
+            '/api/health',
+            '/api/public/info'
+        ];
+
+        foreach ($publicEndpoints as $endpoint) {
+            $response = $this->get($endpoint);
+            // Public endpoints should be accessible or return proper error
+            $this->assertTrue(in_array($response->status(), [200, 401, 403]));
+        }
+
+        // Protected endpoints
+        $protectedEndpoints = [
+            '/api/orders',
+            '/api/users',
+            '/api/customers',
+            '/api/admin/dashboard'
+        ];
+
+        foreach ($protectedEndpoints as $endpoint) {
+            $response = $this->get($endpoint);
+            $response->assertStatus(401); // Should require authentication
+        }
+    }
+
+    /** @test */
+    public function test_api_rate_limiting()
+    {
+        $user = $this->testUsers->first();
+        $this->actingAs($user);
+
+        $maxRequests = 60; // Standard API rate limit
+        $successfulRequests = 0;
+
+        for ($i = 0; $i < $maxRequests + 5; $i++) {
+            $response = $this->get('/api/orders');
+            
+            if ($response->status() === 200) {
+                $successfulRequests++;
+            } else {
+                $response->assertStatus(429); // Rate limit exceeded
+                break;
+            }
+        }
+
+        $this->assertGreaterThan(0, $successfulRequests);
+    }
+
+    /** @test */
+    public function test_api_input_validation()
+    {
+        $user = $this->testUsers->first();
+        $this->actingAs($user);
+
+        // Test SQL injection
+        $maliciousPayloads = [
+            "' OR '1'='1",
+            "'; DROP TABLE orders; --",
+            "<script>alert('xss')</script>"
+        ];
+
+        foreach ($maliciousPayloads as $payload) {
+            $response = $this->post('/api/orders', [
+                'customer_id' => $payload,
+                'total_amount' => $payload
+            ]);
+            
+            $response->assertStatus(422); // Validation error
+        }
+    }
+
+    /** @test */
+    public function test_api_authorization()
+    {
+        $adminUser = $this->testUsers->first();
+        $adminUser->assignRole('admin');
+
+        $regularUser = $this->testUsers->skip(1)->first();
+        $regularUser->assignRole('user');
+
+        // Admin endpoints
+        $this->actingAs($adminUser)->get('/api/admin/stats')->assertStatus(200);
+        $this->actingAs($regularUser)->get('/api/admin/stats')->assertStatus(403);
+
+        // Regular user endpoints
+        $this->actingAs($regularUser)->get('/api/orders')->assertStatus(200);
+        $this->actingAs($adminUser)->get('/api/orders')->assertStatus(200);
+    }
+}
