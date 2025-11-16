@@ -54,7 +54,7 @@ COPY . .
 RUN if [ -f package.json ]; then npm install && npm install terser && npm run build; fi
 
 # Run database migrations
-RUN php artisan migrate --force
+#RUN php artisan migrate --force
 
 # Set permissions
 RUN chown -R www-data:www-data /var/www/html \
@@ -76,3 +76,4 @@ EXPOSE 80
 
 # Start Apache
 CMD ["apache2-foreground"]
+
