@@ -36,6 +36,9 @@ ENV DB_DATABASE=v5_b59v
 ENV DB_USERNAME=postgre
 ENV DB_PASSWORD=oUn1YlbmHNKxbBDVPVTFFHS6TJrDIjYv
 
+# Set cache driver to file to avoid Redis dependency during build
+ENV CACHE_DRIVER=file
+
 # Copy composer files
 COPY composer.json composer.lock* ./
 
