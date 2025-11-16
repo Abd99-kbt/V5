@@ -45,7 +45,7 @@ ENV QUEUE_CONNECTION=sync
 COPY composer.json composer.lock* ./
 
 # Install PHP dependencies
-RUN composer install --no-dev --optimize-autoloader --no-interaction
+RUN composer install --no-dev --optimize-autoloader --no-interaction --ignore-platform-req=php --ignore-platform-req=ext-zip --ignore-platform-req=ext-intl
 
 # Copy application code
 COPY . .
