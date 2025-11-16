@@ -35,7 +35,7 @@ RUN composer install --no-dev --optimize-autoloader --no-interaction
 COPY . .
 
 # Install Node dependencies and build assets
-RUN if [ -f package.json ]; then npm install && npm run build; fi
+RUN if [ -f package.json ]; then npm install && npm install terser && npm run build; fi
 
 # Set permissions
 RUN chown -R www-data:www-data /var/www/html \
