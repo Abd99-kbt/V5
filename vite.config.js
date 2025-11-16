@@ -86,15 +86,6 @@ export default defineConfig(({ command, mode }) => {
                     drop_console: env.NODE_ENV === 'production',
                     drop_debugger: true,
                     pure_funcs: env.NODE_ENV === 'production' ? ['console.log', 'console.info'] : [],
-                    passes: 2,
-                    dead_code: true,
-                    unused: true,
-                },
-                mangle: {
-                    safari10: true,
-                },
-                format: {
-                    comments: false,
                 },
             },
         },
