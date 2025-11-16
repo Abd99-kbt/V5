@@ -53,8 +53,8 @@ COPY . .
 # Install Node dependencies and build assets
 RUN if [ -f package.json ]; then npm install && npm install terser && npm run build; fi
 
-# Publish Filament assets
-RUN php artisan filament:publish
+# Install Filament (publishes assets and config)
+RUN php artisan filament:install --no-interaction
 
 # Create storage link
 RUN php artisan storage:link
