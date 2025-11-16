@@ -17,13 +17,21 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Install PHP extensions
-RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd zip intl
+RUN docker-php-ext-install pdo_mysql pdo_pgsql pgsql mbstring exif pcntl bcmath gd zip intl
 
 # Get latest Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
 # Set working directory
 WORKDIR /var/www/html
+
+# Set environment variables for database
+ENV DB_CONNECTION=pgsql
+ENV DB_HOST=dpg-d4cq8uf5r7bs73aj2nn0-a
+ENV DB_PORT=5432
+ENV DB_DATABASE=v5_b59v
+ENV DB_USERNAME=postgre
+ENV DB_PASSWORD=oUn1YlbmHNKxbBDVPVTFFHS6TJrDIjYv
 
 # Copy composer files
 COPY composer.json composer.lock* ./
@@ -36,6 +44,9 @@ COPY . .
 
 # Install Node dependencies and build assets
 RUN if [ -f package.json ]; then npm install && npm install terser && npm run build; fi
+
+# Run database migrations
+RUN php artisan migrate --force
 
 # Set permissions
 RUN chown -R www-data:www-data /var/www/html \
