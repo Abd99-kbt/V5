@@ -46,6 +46,9 @@ RUN chown -R www-data:www-data /var/www/html \
 RUN echo "ServerName localhost" >> /etc/apache2/apache2.conf \
     && a2enmod rewrite
 
+# Configure Apache DocumentRoot to public directory
+RUN sed -i 's|/var/www/html|/var/www/html/public|g' /etc/apache2/sites-available/000-default.conf
+
 # Copy custom Apache config if exists
 COPY .htaccess* /var/www/html/.htaccess
 
