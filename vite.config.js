@@ -88,7 +88,7 @@ export default defineConfig(({ command, mode }) => {
                     pure_funcs: env.NODE_ENV === 'production' ? ['console.log', 'console.info'] : [],
                     passes: 2,
                     dead_code: true,
-                    drop_unused: true,
+                    unused: true,
                 },
                 mangle: {
                     safari10: true,
