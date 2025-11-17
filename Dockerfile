@@ -13,6 +13,7 @@ RUN apt-get update && apt-get install -y \
     libxml2-dev \
     libpq-dev \
     libzip-dev \
+    libicu-dev \
     zip \
     unzip \
     nodejs \
