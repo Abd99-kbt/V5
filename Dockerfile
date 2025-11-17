@@ -34,6 +34,9 @@ COPY . /var/www/html
 # Copy existing application directory permissions
 COPY --chown=www-data:www-data . /var/www/html
 
+# Copy production environment file
+COPY .env.render .env
+
 # Install PHP dependencies
 RUN composer install --no-dev --optimize-autoloader
 
