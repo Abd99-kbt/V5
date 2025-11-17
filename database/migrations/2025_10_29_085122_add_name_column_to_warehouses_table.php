@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('warehouses', function (Blueprint $table) {
-            $table->string('name')->virtualAs('CASE WHEN name_ar IS NOT NULL AND name_ar != "" THEN name_ar ELSE COALESCE(name_en, "Unnamed Warehouse") END')->after('name_ar');
+            $table->string('name')->virtualAs('CASE WHEN name_ar IS NOT NULL AND name_ar != \'\' THEN name_ar ELSE COALESCE(name_en, \'Unnamed Warehouse\') END')->after('name_ar');
         });
     }
 
