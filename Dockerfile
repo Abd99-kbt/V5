@@ -37,6 +37,9 @@ COPY --chown=www-data:www-data . /var/www/html
 # Copy production environment file
 COPY .env.render .env
 
+# Generate application key
+RUN php artisan key:generate --force
+
 # Install PHP dependencies
 RUN composer install --no-dev --optimize-autoloader
 
@@ -47,8 +50,8 @@ RUN npm install && npm install -g terser && npm run build
 # Create storage link
 RUN php artisan storage:link
 
-# Run database migrations (with file cache to avoid Redis dependency)
-RUN CACHE_STORE=file SESSION_DRIVER=file php artisan migrate --force
+# Clear config cache and run database migrations (with file cache to avoid Redis dependency)
+RUN php artisan config:clear && CACHE_STORE=file SESSION_DRIVER=file php artisan migrate --force
 
 # Change Apache document root to /var/www/html/public
 RUN sed -i 's|/var/www/html|/var/www/html/public|g' /etc/apache2/sites-available/000-default.conf
