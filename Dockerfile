@@ -41,7 +41,6 @@ RUN composer install --no-dev --optimize-autoloader
 RUN npm install && npm install -g terser && npm run build
 
 # Filament assets are published automatically
-
 # Create storage link
 RUN php artisan storage:link
 
