@@ -38,7 +38,7 @@ COPY --chown=www-data:www-data . /var/www/html
 RUN composer install --no-dev --optimize-autoloader
 
 # Install Node dependencies and build assets
-RUN npm install && npm run build
+RUN npm install && npm install -g terser && npm run build
 
 # Publish Filament assets
 RUN php artisan filament:publish
