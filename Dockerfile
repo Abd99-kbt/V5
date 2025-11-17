@@ -37,11 +37,11 @@ COPY --chown=www-data:www-data . /var/www/html
 # Copy production environment file
 COPY .env.render .env
 
-# Generate application key
-RUN php artisan key:generate --force
-
 # Install PHP dependencies
 RUN composer install --no-dev --optimize-autoloader
+
+# Generate application key
+RUN php artisan key:generate --force
 
 # Install Node dependencies and build assets
 RUN npm install && npm install -g terser && npm run build
