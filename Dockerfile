@@ -1,8 +1,5 @@
-# Use the official PHP image with Apache
+# Use PHP 8.2 with Apache
 FROM php:8.2-apache
-
-# Set working directory
-WORKDIR /var/www/html
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
@@ -11,66 +8,83 @@ RUN apt-get update && apt-get install -y \
     libpng-dev \
     libonig-dev \
     libxml2-dev \
-    libpq-dev \
     libzip-dev \
     libicu-dev \
+    libpq-dev \
+    postgresql-client \
     zip \
     unzip \
     nodejs \
-    npm
-
-# Clear cache
-RUN apt-get clean && rm -rf /var/lib/apt/lists/*
+    npm \
+    && rm -rf /var/lib/apt/lists/*
 
 # Install PHP extensions
-RUN docker-php-ext-install pdo_pgsql mbstring exif pcntl bcmath gd zip intl
+RUN pecl install redis && docker-php-ext-enable redis
+RUN docker-php-ext-install pdo_mysql pdo_pgsql pgsql mbstring exif pcntl bcmath gd zip intl
 
 # Get latest Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Copy existing application directory contents
-COPY . /var/www/html
+# Set working directory
+WORKDIR /var/www/html
 
-# Copy existing application directory permissions
-COPY --chown=www-data:www-data . /var/www/html
+# Set environment variables for database
+ENV DB_CONNECTION=pgsql
+ENV DB_HOST=dpg-d4cq8uf5r7bs73aj2nn0-a
+ENV DB_PORT=5432
+ENV DB_DATABASE=v5_b59v
+ENV DB_USERNAME=postgre
+ENV DB_PASSWORD=oUn1YlbmHNKxbBDVPVTFFHS6TJrDIjYv
 
-# Copy production environment file
-COPY .env.render .env
+# Set cache driver to file to avoid Redis dependency during build
+ENV CACHE_DRIVER=file
+ENV SESSION_DRIVER=file
+ENV QUEUE_CONNECTION=sync
+
+# Copy composer files
+COPY composer.json composer.lock* ./
 
 # Install PHP dependencies
-RUN composer install --no-dev --optimize-autoloader
+RUN composer install --no-dev --optimize-autoloader --no-interaction --ignore-platform-req=php --ignore-platform-req=ext-zip --ignore-platform-req=ext-intl
 
-# Generate application key
-RUN php artisan key:generate --force
+# Copy application code
+COPY . .
 
 # Install Node dependencies and build assets
-RUN npm install && npm install -g terser && npm run build
+RUN if [ -f package.json ]; then npm install && npm install terser && npm run build; fi
 
-# Filament assets are published automatically
+# Install Filament (publishes assets and config)
+RUN php artisan filament:install --no-interaction
+
 # Create storage link
 RUN php artisan storage:link
 
-# Clear config cache and run database migrations (with file cache to avoid Redis dependency)
-RUN php artisan config:clear && CACHE_STORE=file SESSION_DRIVER=file php artisan migrate --force
+# Clear config cache and run database migrations with file-based cache
+RUN php artisan config:clear && \
+    CACHE_STORE=file SESSION_DRIVER=file QUEUE_CONNECTION=sync php artisan db:wipe --force && \
+    CACHE_STORE=file SESSION_DRIVER=file QUEUE_CONNECTION=sync php artisan migrate --force
 
-# Change Apache document root to /var/www/html/public
+# Set permissions
+RUN chown -R www-data:www-data /var/www/html \
+    && chmod -R 755 /var/www/html/storage \
+    && chmod -R 755 /var/www/html/bootstrap/cache
+
+# Configure Apache
+RUN echo "ServerName localhost" >> /etc/apache2/apache2.conf \
+    && a2enmod rewrite
+
+# Configure Apache DocumentRoot to public directory
 RUN sed -i 's|/var/www/html|/var/www/html/public|g' /etc/apache2/sites-available/000-default.conf
 
-# Create custom Apache config with the Directory block
+# Add Directory block for /var/www/html/public
 RUN echo '<Directory /var/www/html/public>\n\
     Options Indexes FollowSymLinks\n\
     AllowOverride All\n\
     Require all granted\n\
-</Directory>' > /etc/apache2/conf-available/custom-directory.conf
+</Directory>' >> /etc/apache2/apache2.conf
 
-# Enable the custom config
-RUN a2enconf custom-directory
-
-# Enable Apache mod_rewrite
-RUN a2enmod rewrite
-
-# Change ownership of our applications
-RUN chown -R www-data:www-data /var/www/html
+# Copy custom Apache config if exists
+COPY .htaccess* /var/www/html/.htaccess
 
 # Expose port 80
 EXPOSE 80
