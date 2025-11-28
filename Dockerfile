@@ -1,92 +1,63 @@
-# Use PHP 8.2 with Apache
-FROM php:8.2-apache
+FROM php:8.1-apache
+
+ENV DB_HOST=dpg-d4knbfs9c44c73f2ni3g-a
+ENV DB_PORT=5432
+ENV DB_DATABASE=v5_91n7
+ENV DB_USERNAME=postgre
+ENV DB_PASSWORD=Jv3ylh1SbkOV5ld2RhwGDAvIzHXi5XJC
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
+    libpng-dev \
+    libjpeg-dev \
+    libfreetype6-dev \
+    zip \
     git \
     curl \
-    libpng-dev \
     libonig-dev \
     libxml2-dev \
     libzip-dev \
-    libicu-dev \
-    libpq-dev \
-    postgresql-client \
-    zip \
-    unzip \
     nodejs \
-    npm \
-    && rm -rf /var/lib/apt/lists/*
+    npm
 
 # Install PHP extensions
-RUN pecl install redis && docker-php-ext-enable redis
-RUN docker-php-ext-install pdo_mysql pdo_pgsql pgsql mbstring exif pcntl bcmath gd zip intl
+RUN docker-php-ext-install pdo pdo_mysql mbstring exif pcntl bcmath gd zip
 
-# Get latest Composer
-COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+# Install Composer
+RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
 # Set working directory
 WORKDIR /var/www/html
 
-# Set environment variables for database
-ENV DB_CONNECTION=pgsql
-ENV DB_HOST=dpg-d4cq8uf5r7bs73aj2nn0-a
-ENV DB_PORT=5432
-ENV DB_DATABASE=v5_b59v
-ENV DB_USERNAME=postgre
-ENV DB_PASSWORD=oUn1YlbmHNKxbBDVPVTFFHS6TJrDIjYv
-
-# Set cache driver to file to avoid Redis dependency during build
-ENV CACHE_DRIVER=file
-ENV SESSION_DRIVER=file
-ENV QUEUE_CONNECTION=sync
-
-# Copy composer files
-COPY composer.json composer.lock* ./
-
-# Install PHP dependencies
-RUN composer install --no-dev --optimize-autoloader --no-interaction --ignore-platform-req=php --ignore-platform-req=ext-zip --ignore-platform-req=ext-intl
-
 # Copy application code
 COPY . .
 
+# Install PHP dependencies
+RUN composer install --no-dev --optimize-autoloader
+
 # Install Node dependencies and build assets
-RUN if [ -f package.json ]; then npm install && npm install terser && npm run build; fi
-
-# Install Filament (publishes assets and config)
-RUN php artisan filament:install --no-interaction
-
-# Create storage link
-RUN php artisan storage:link
-
-# Clear config cache and run database migrations with file-based cache
-RUN php artisan config:clear && \
-    CACHE_STORE=file SESSION_DRIVER=file QUEUE_CONNECTION=sync php artisan db:wipe --force && \
-    CACHE_STORE=file SESSION_DRIVER=file QUEUE_CONNECTION=sync php artisan migrate --force
+RUN npm install && npm run build
 
 # Set permissions
 RUN chown -R www-data:www-data /var/www/html \
     && chmod -R 755 /var/www/html/storage \
     && chmod -R 755 /var/www/html/bootstrap/cache
 
-# Configure Apache
-RUN echo "ServerName localhost" >> /etc/apache2/apache2.conf \
-    && a2enmod rewrite
+# Create database directory and SQLite file
+RUN mkdir -p database && touch database/database.sqlite && chown www-data:www-data database/database.sqlite
 
-# Configure Apache DocumentRoot to public directory
-RUN sed -i 's|/var/www/html|/var/www/html/public|g' /etc/apache2/sites-available/000-default.conf
+# Generate application key
+RUN php artisan key:generate
 
-# Add Directory block for /var/www/html/public
-RUN echo '<Directory /var/www/html/public>\n\
-    Options Indexes FollowSymLinks\n\
-    AllowOverride All\n\
-    Require all granted\n\
-</Directory>' >> /etc/apache2/apache2.conf
+# Run migrations
+RUN php artisan migrate --force
 
-# Copy custom Apache config if exists
-COPY .htaccess* /var/www/html/.htaccess
+# Cache configuration
+RUN php artisan config:cache \
+    && php artisan route:cache \
+    && php artisan view:cache
 
-# Expose port 80
+# Expose port
 EXPOSE 80
 
 # Start Apache
